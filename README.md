@@ -32,7 +32,7 @@ This repo is a **template**. It holds the code only. You bring your own models, 
 
 ## What you need
 
-- **Desktop**: Windows 10/11, NVIDIA GPU (built and tuned on 12 GB VRAM), 32 GB RAM, ~150 GB free disk for models.
+- **Desktop**: Windows 10/11, NVIDIA GPU, ~150 GB free disk for models.
 - **Tailscale** on every device (free personal plan is fine), with MagicDNS and HTTPS certificates turned on.
 - **OpenSSH Server** on the desktop (only for deploying from a laptop).
 - Optional laptop: Windows + Python 3.11 for the launcher app.
