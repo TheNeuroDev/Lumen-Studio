@@ -1,60 +1,114 @@
-# 🌟 Lumen Studio
+# Lumen Studio
 
-**Your Private, Self-Hosted AI Dashboard.**
+A Personal AI Dashboard. Chats, Code, Images, Videos, Music, and Voice.
 
-Lumen Studio is a unified interface for generating media, chatting with AI, and coding—all running locally on your hardware and accessible from anywhere via a private Tailscale network. 
+A private, self-hosted AI studio. You type on your laptop or phone. Your own desktop GPU does the work.
+Everything stays on your machines: models, outputs, chats, logins.
 
-Experience the power of local AI without the privacy trade-offs. No cloud telemetry. No forced subscriptions. Just your models, your data, your rules.
+Three modes in one dark, phone-friendly web page:
 
-## ✨ Why Lumen Studio?
+- **Studio**: images, image edits, upscales, (experimental) video, voice cloning, music.
+- **Chat**: a private chat with your local LLM. History is saved on your desktop.
+- **Code**: an AI coding workspace (OpenCode) with one folder per project, fenced so the model can only touch that folder.
 
-*   **🎨 Unified Studio:** Generate images, edit photos, create music, and synthesize voice in one polished, dark-mode interface.
-*   **💬 Private Chat:** Uncensored, local LLM conversations with persistent history stored entirely on your machine.
-*   **💻 Intelligent Code Workspace:** A full coding environment with project isolation ("the fence") and real-time artifact preview.
-*   **📊 Real-Time Cost Tracking:** Monitor GPU usage and electricity costs for every generation and chat session. Know exactly what your AI usage costs in terms of electricity.
-*   **📱 Access Anywhere:** Seamlessly access your dashboard from your laptop, phone, or tablet via your private Tailscale network.
+This repo is a **template**. It holds the code only. You bring your own models, secrets, API keys and network names.
 
-## 🚀 Key Features
+---
 
-### 1. Fully Offline & Private
-Bring your own uncensored models. Perform your own processing. Store your own files. No internet required for core functionality.
+## How it fits together
 
-### 2. API Ready
-Prefer cloud models? Plug in your API keys and switch modes instantly.
+```
+ laptop / phone  ──(Tailscale, private)──►  desktop PC ("Data Center")
+   browser or                                 gateway.ps1  :1240  (serves the page, switches engines)
+   LumenLauncher.pyw                           ├─ sd-server   :1234  images / video  (stable-diffusion.cpp)
+                                               ├─ llama-server:8099  chat + code LLM (llama.cpp)
+                                               ├─ voice       :8002  Chatterbox-Turbo
+                                               ├─ music       :8001  ACE-Step 1.5
+                                               └─ OpenCode    :4096  behind the sign-in gate :4097
+```
 
-### 3. Cross-Device Accessibility
-Designed to be responsive and functional on:
-*   💻 Laptops
-*   📱 Phones
-*   📟 Tablets
+- One GPU engine runs at a time. The page switches them for you.
+- The gateway only answers `127.0.0.1`. `tailscale serve` publishes it to your tailnet over HTTPS. Nothing is open to the internet.
 
-### 4. Performance Optimized
-Built for speed and efficiency, leveraging local hardware acceleration for rapid image generation and fluid code assistance.
+## What you need
 
-## 🔮 Future Roadmap
+- **Desktop**: Windows 10/11, NVIDIA GPU (built and tuned on 12 GB VRAM), 32 GB RAM, ~150 GB free disk for models.
+- **Tailscale** on every device (free personal plan is fine), with MagicDNS and HTTPS certificates turned on.
+- **OpenSSH Server** on the desktop (only for deploying from a laptop).
+- Optional laptop: Windows + Python 3.11 for the launcher app.
 
-*   **Getartcraft Integration:** Implementation of "Craft Anything" capabilities directly within the Lumen Code environment.
-*   **Enhanced Artifact Management:** Better visualization and management of generated code, images, and files.
-*   **Expanded Model Support:** Easy configuration for additional open-weight models.
+## Setup (about an hour, mostly downloads)
 
-## 🛠️ Tech Stack
+Do these in order. Each step is one thing.
 
-*   **Frontend:** Custom Vanilla JS/CSS SPA (No external font or CDN dependencies).
-*   **Backend:** Lightweight PowerShell Gateway managing local engine switching.
-*   **Code Engine:** Embedded OpenCode (forked for privacy and control).
-*   **Networking:** Tailscale for secure, NAT-traversing remote access.
+### 1. Desktop folders
+1. Make `C:\Lumen\Engine`, then a link so the scripts' `C:\AI` paths work:
+   `cmd /c mklink /J C:\AI C:\Lumen\Engine`
+2. Copy this repo's `desktop\` contents into `C:\AI` (or use `scripts\deploy.ps1` from a laptop, step 6).
+3. Copy `desktop\config\lumen.example.json` to `C:\AI\config\lumen.json` and set `publicHost` to your desktop's tailnet name.
 
+### 2. Engines
+Download the release builds into these folders:
+- llama.cpp (CUDA build) → `C:\AI\llama.cpp\` (needs `llama-server.exe`)
+- stable-diffusion.cpp (CUDA build) → `C:\AI\sd\` (needs `sd-server.exe`)
 
-## 🚀 Getting Started
+### 3. Models
+See **[docs/INSTALL-MODELS.md](docs/INSTALL-MODELS.md)**. Short version:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\AI\tools\download-chat-model.ps1
+powershell -ExecutionPolicy Bypass -File C:\AI\tools\download-models.ps1
+powershell -ExecutionPolicy Bypass -File C:\AI\tools\setup-audio.ps1      # voice + music (optional)
+powershell -ExecutionPolicy Bypass -File C:\AI\tools\install-ffmpeg.ps1   # music MP3s (optional)
+```
+Want a different model? Point `C:\AI\config\chat-model.json` / `code-model.json` at any GGUF.
 
-1.  **Clone the repository:**
+### 4. Secrets and logins
+See **[docs/SECRETS.md](docs/SECRETS.md)**. Secrets live in `C:\AI\secrets\` on the desktop. They are never in this repo.
 
-2.  **Deploy to your personal Data Center:**
+### 5. Start the gateway and publish it
+1. Register a scheduled task **"Lumen Gateway"** that runs at startup:
+   `powershell -NoProfile -ExecutionPolicy Bypass -File C:\AI\gateway.ps1`
+2. Publish it to your tailnet: `tailscale serve --bg --https=443 http://127.0.0.1:1240`
+3. Code workspace (optional): `powershell -ExecutionPolicy Bypass -File C:\AI\tools\setup-code.ps1`
+4. Open `https://<your-desktop>.<your-tailnet>.ts.net/` from any device on your tailnet.
 
-3.  **Access the Dashboard:**
-    *   Ensure your device is connected to your Tailscale network.
-    *   Navigate to `https://<your-desktop-tailnet-name>.ts.net/`
+### 6. Laptop (optional)
+1. Copy `lumen.config.example.json` to `lumen.config.json` and fill it in. (It's in `.gitignore`.)
+2. Deploy changes: `powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1` (`-WebOnly` for page-only).
+   It refuses PowerShell that doesn't parse and backs up the live files to `C:\AI\archive\deploy-<time>\` first.
+3. Check it: `powershell -ExecutionPolicy Bypass -File tests\smoke.ps1`
+4. App window: run `LumenLauncher.pyw` with pythonw. Put a portable ungoogled-chromium in `app\engine\` for a private app window (Firefox is the fallback).
 
-## 📝 License
+Optional extras: `scripts\setup-syncthing.ps1` + `scripts\setup-mirror.ps1` (two-way mirror of `C:\Lumen` over Tailscale), `scripts\backup-datacenter.ps1` + `scripts\register-backup-task.ps1` (pull-only versioned backup to the laptop).
 
-This project is licensed under the [MIT License](LICENSE).
+## Your personal setup stays local
+
+Keep a **`Lumen` folder on your own machine** (for example `C:\Lumen` on the desktop, or a mirror on your laptop) for everything that's yours: config, secrets, models, outputs, chats, notes about your hardware and network.
+Nothing in that folder belongs in git. `.gitignore` already blocks the usual suspects (`lumen.config.json`, `secrets/`, model files, media).
+
+## Repo layout
+
+| Path | What |
+|---|---|
+| `desktop/` | Everything that runs on the desktop. Mirrors `C:\AI`. |
+| `desktop/gateway.ps1`, `desktop/gw/*.ps1` | The web server + API (PowerShell 5.1). |
+| `desktop/mode.ps1`, `desktop/llm-config.ps1` | Engine switching and LLM settings. |
+| `desktop/web/` | The page: `index.html`, `app.css`, `app.js`. |
+| `desktop/tools/` | Setup and download scripts, Code sign-in gate. |
+| `desktop/config/` | Model settings + `*.example.json` templates. |
+| `scripts/` | Laptop-side: deploy, login change, mirror, backup. |
+| `tests/` | Smoke test + Playwright end-to-end tests (`LUMEN_URL` must be set). |
+| `LumenLauncher.pyw` | Laptop launcher (private app window). |
+| `laptop/code/opencode.json` | Example OpenCode client config pointing at your desktop's model. |
+| `AGENTS.md` | Guide for AI assistants working on or supporting Lumen. |
+
+## Security notes
+
+- The tailnet is the lock. Don't publish the gateway with `tailscale funnel` or port forwarding.
+- POSTs from foreign web origins are refused (`publicHost` in `lumen.json` is the allowed one).
+- Lumen Code's model can only touch its own project folder, and every shell command asks first.
+- Never commit `lumen.config.json`, `C:\AI\config\lumen.json`, anything in `secrets\`, or model files.
+
+## Models and licenses
+
+The default models are open-weight and chosen to be unrestricted. Each one has its own license (some are non-commercial, for example Qwen-Image 2.1). Check each model's license before you use its output commercially.

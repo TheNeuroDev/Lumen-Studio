@@ -1,0 +1,50 @@
+# ---- Your personal values: never commit ----
+lumen.config.json
+desktop/config/lumen.json
+desktop/config/paths.json
+desktop/config/electricity.json
+.env
+.env.*
+!.env.example
+secrets/
+**/secrets/
+*.key
+*.pem
+id_rsa*
+id_ed25519*
+
+# ---- Models and weights (download them; see docs/INSTALL-MODELS.md) ----
+*.gguf
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+*.done
+/models/
+/image-models/
+/checkpoints/
+
+# ---- Your content ----
+/Studio/
+/Chats/
+/Code/
+/Backups/
+gallery.jsonl
+*.webm
+*.mp4
+*.flac
+*.wav
+*.mp3
+
+# ---- Local runtime / browser data ----
+app/
+browser-profile/
+logs/
+archive/
+tests/shots/
+node_modules/
+__pycache__/
+.venv/
+*.lumen-upload

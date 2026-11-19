@@ -1,0 +1,5 @@
+{
+  "_readme": "Copy to C:\\AI\\config\\lumen.json on the desktop (not deployed by deploy.ps1, not in git). Restart the gateway after changing it.",
+  "publicHost": "YOUR-DESKTOP.YOUR-TAILNET.ts.net",
+  "opencodeDb": ""
+}

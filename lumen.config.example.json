@@ -1,0 +1,7 @@
+{
+  "_readme": "Copy this file to lumen.config.json (ignored by git) and replace the YOUR- values. Used by LumenLauncher.pyw and scripts\\*.ps1 on the laptop.",
+  "publicUrl": "https://YOUR-DESKTOP.YOUR-TAILNET.ts.net",
+  "desktopSsh": "YOUR-WINDOWS-USER@YOUR-DESKTOP-TAILSCALE-IP",
+  "laptopRoot": "D:\\Lumen",
+  "disconnectTailscaleOnClose": false
+}

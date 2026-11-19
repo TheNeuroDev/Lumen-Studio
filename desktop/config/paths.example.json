@@ -1,0 +1,6 @@
+{
+  "_readme": "Optional. Copy to C:\\AI\\config\\paths.json to move Lumen's data folders. Missing fields use these defaults.",
+  "code": "C:\\Lumen\\Code",
+  "studio": "C:\\Lumen\\Studio",
+  "chats": "C:\\Lumen\\Chats"
+}

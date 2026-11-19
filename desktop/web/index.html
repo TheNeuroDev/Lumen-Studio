@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lumen Studio</title>
+<meta name="description" content="Images, edits, video, voice, music, chat and code, made on your desktop and reachable anywhere on your tailnet.">
+<meta name="theme-color" content="#07070a">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lumen">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body data-view="studio">
+<div class="ambient" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="vignette"></div><div class="grain"></div></div>
+
+<div class="shell">
+  <nav class="siderail" id="siderail" aria-label="Sections">
+    <a class="mark-link rail-mark" href="#" aria-label="Lumen Studio home"><span class="mark"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 1.5l2.1 7.4 7.4 2.1-7.4 2.1-2.1 7.4-2.1-7.4L2.5 11l7.4-2.1z"/></svg></span></a>
+    <div class="views" id="views" role="tablist" aria-label="Mode">
+      <button type="button" role="tab" data-view="studio" aria-selected="true"><span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/><path d="M18.5 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg><span class="vdot"></span></span><span class="vl">Studio</span></button>
+      <button type="button" role="tab" data-view="chat" aria-selected="false"><span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 01-11.6 7.1L4 20l1-4.1A8 8 0 1120 12z"/></svg><span class="vdot"></span></span><span class="vl">Chat</span></button>
+      <button type="button" role="tab" data-view="code" aria-selected="false"><span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg><span class="vdot"></span></span><span class="vl">Code</span></button>
+    </div>
+    <a class="rail-arch" id="railArch" href="#archive"><span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg></span><span class="vl">Archive</span><span class="count" id="navCount">0</span></a>
+  </nav>
+  <header class="top" id="top">
+    <div class="brand">
+      <a class="mark-link" href="#" data-view-link="studio" aria-label="Lumen Studio home"><span class="mark"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 1.5l2.1 7.4 7.4 2.1-7.4 2.1-2.1 7.4-2.1-7.4L2.5 11l7.4-2.1z"/></svg></span></a>
+      <span class="brand-name">Lumen<em id="viewName">Studio</em></span>
+    </div>
+    <nav class="modes" id="modes" role="tablist" aria-label="What to make"></nav>
+    <div class="top-right">
+      <button class="cost-pill" id="costPill" hidden type="button" aria-haspopup="dialog" aria-controls="costSheet" title="Electricity cost">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.2 2 4.5 13.4h6.1L9.8 22l8.7-11.4h-6.1z"/></svg>
+        <b id="costPillVal">–</b><span class="long">today</span>
+      </button>
+      <div class="engine" id="engine" data-state="unknown" role="status" aria-live="polite">
+        <span class="dot"></span><span id="engineText">Connecting<span class="long"> to desktop</span>…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="studio" id="create">
+    <section class="stage" aria-label="Canvas">
+      <div class="canvas is-empty" id="canvas">
+        <div class="hero" id="hero">
+          <div class="hero-inner">
+            <span class="eyebrow"><i></i><span id="heroEyebrow">Qwen-Image 2.1 · running on your desktop</span></span>
+            <h1 id="heroTitle">Make light<br><em>out of words.</em></h1>
+            <p id="heroText">Describe a scene and press Generate. Every image is saved to your desktop and waits for you in the archive.</p>
+            <div class="ideas" id="ideas"></div>
+          </div>
+        </div>
+        <div class="fit" id="fit">
+          <div class="placeholder" id="ph"><div class="shimmer" style="position:absolute;inset:0"></div></div>
+          <img class="preview" id="preview" alt="">
+          <img class="final" id="final" alt="">
+          <video id="finalVid" playsinline muted loop controls preload="metadata"></video>
+        </div>
+        <div class="audio-stage" id="audioStage"></div>
+        <div class="bar" id="bar"></div>
+        <div class="hud" id="hud" aria-live="polite">
+          <span class="spinner"></span>
+          <span id="hudText"><strong>Queued</strong></span>
+          <span class="t" id="hudTime">0.0s</span>
+          <button class="icon-btn" id="cancelBtn" title="Cancel" aria-label="Cancel" style="width:30px;height:30px;border-radius:50%">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="sleep" id="sleep">
+          <div class="sleep-card">
+            <div class="moon" aria-hidden="true"></div>
+            <h3 id="sleepTitle">Loading <em>the model…</em></h3>
+            <p id="sleepText"></p>
+            <div class="sw-bar" id="swBar"><i></i></div>
+            <div class="sw-time" id="swTime"></div>
+            <div class="row" id="sleepRow">
+              <button class="btn" id="sleepCancel" type="button">Not now</button>
+              <button class="go" id="wakeBtn" type="button" style="height:44px;flex:1.4"><span id="wakeLabel">Switch</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meta" id="meta">
+        <div class="meta-prompt" id="metaPrompt"></div>
+        <div class="chips" id="metaChips"></div>
+        <div class="actions">
+          <a class="icon-btn" id="dlBtn" title="Download" aria-label="Download" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg></a>
+          <button class="icon-btn" id="remixBtn" title="Remix: load these settings" aria-label="Load these settings into the composer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11a4 4 0 010 8H8m0 0l3-3m-3 3l3 3"/></svg></button>
+          <button class="icon-btn" id="rerollBtn" title="Re-roll: same prompt, new seed" aria-label="Generate again with a new seed">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/></svg></button>
+          <button class="icon-btn" id="expandBtn" title="Open" aria-label="Open in viewer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button>
+        </div>
+      </div>
+      <div class="strip" id="strip"></div>
+    </section>
+
+    <aside class="composer" aria-label="Composer">
+
+      <!-- IMAGE -->
+      <div class="panel" data-panel="image" role="tabpanel">
+        <div class="field">
+          <div class="label"><span>Model</span><span id="imgModelNote"></span></div>
+          <div class="seg" id="imgModel" role="group" aria-label="Image model"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="imgPrompt"><span>Prompt</span><span id="imgCount">0</span></label>
+          <div class="prompt-wrap">
+            <textarea id="imgPrompt" class="text" placeholder="A rain-soaked Tokyo alley at night, neon reflections, shot on 35mm film…" spellcheck="true"></textarea>
+            <div class="prompt-tools">
+              <button class="tool" data-surprise="image" type="button" title="Fill in a random prompt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>Surprise me</button>
+              <button class="tool right" data-clear="imgPrompt" type="button">Clear</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="label"><span>Aspect ratio</span><span id="dimsLabel">1024 × 1024</span></div>
+          <div class="ratios" id="ratios" role="group" aria-label="Aspect ratio"></div>
+        </div>
+        <div class="field">
+          <div class="label"><span>Resolution</span><span id="mpLabel">1.0 MP</span></div>
+          <div class="seg" id="sizes" role="group" aria-label="Resolution"></div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <div class="label"><span>Images</span></div>
+            <div class="stepper">
+              <button type="button" id="countDown" aria-label="Fewer images">−</button>
+              <output id="countOut" aria-live="polite">1</output>
+              <button type="button" id="countUp" aria-label="More images">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <div class="label"><span>Seed</span></div>
+            <div class="seed" data-seed="image"></div>
+          </div>
+        </div>
+        <details class="adv">
+          <summary>Fine-tuning <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="adv-body">
+            <div class="field">
+              <div class="label"><span>Steps</span><span id="imgStepsOut">8</span></div>
+              <input type="range" id="imgSteps" min="4" max="16" step="1" value="8" aria-label="Sampling steps">
+              <p class="hint" id="imgStepsHint"></p>
+            </div>
+            <div class="field">
+              <div class="label"><span>File format</span></div>
+              <div class="seg" id="formats" role="group" aria-label="File format"></div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- EDIT -->
+      <div class="panel" data-panel="edit" role="tabpanel">
+        <div class="panel-head"><h2>Edit <em>an image</em></h2><span class="model">Qwen-Image 2.1</span></div>
+        <div class="field">
+          <div class="label"><span>Image to edit</span></div>
+          <div class="src" data-src="edit"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="editPrompt"><span>What should change?</span><span id="editCount">0</span></label>
+          <div class="prompt-wrap">
+            <textarea id="editPrompt" class="text short" placeholder="Make it a snowy winter night. Keep everything else the same." spellcheck="true"></textarea>
+            <div class="prompt-tools">
+              <button class="tool" data-surprise="edit" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>Ideas</button>
+              <button class="tool right" data-clear="editPrompt" type="button">Clear</button>
+            </div>
+          </div>
+          <p class="hint">Best at recolouring, signs and lettering, and new scenery. A person moved onto a new background can look pasted in.</p>
+        </div>
+        <div class="field">
+          <div class="label"><span>Output size</span><span id="editDims">—</span></div>
+          <div class="seg" id="editSizes" role="group" aria-label="Output size"></div>
+        </div>
+        <div class="field">
+          <div class="label"><span>Seed</span></div>
+          <div class="seed" data-seed="edit"></div>
+        </div>
+        <details class="adv">
+          <summary>Fine-tuning <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="adv-body">
+            <div class="field">
+              <div class="label"><span>Steps</span><span id="editStepsOut">40</span></div>
+              <input type="range" id="editSteps" min="20" max="60" step="1" value="40" aria-label="Sampling steps">
+              <p class="hint">Qwen-Image 2.1 is tuned for 40. Fewer steps are faster but softer.</p>
+            </div>
+          </div>
+        </details>
+        <div class="note" id="editNote" hidden></div>
+      </div>
+
+      <!-- VIDEO -->
+      <div class="panel" data-panel="video" role="tabpanel">
+        <div class="panel-head"><h2>Make <em>a video</em></h2><span class="model"><span class="exp">Experimental</span> Wan 2.2 TI2V 5B</span></div>
+        <div class="field">
+          <label class="label" for="vidPrompt"><span>Prompt</span><span id="vidCount">0</span></label>
+          <div class="prompt-wrap">
+            <textarea id="vidPrompt" class="text" placeholder="A red fox trotting through a misty pine forest at dawn, slow tracking shot, cinematic…" spellcheck="true"></textarea>
+            <div class="prompt-tools">
+              <button class="tool" data-surprise="video" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>Surprise me</button>
+              <button class="tool right" data-clear="vidPrompt" type="button">Clear</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="label"><span>Start from an image</span><span>optional</span></div>
+          <div class="src" data-src="video"></div>
+        </div>
+        <div class="field">
+          <div class="label"><span>Shape</span><span id="vidDims">832 × 480</span></div>
+          <div class="seg" id="vidShapes" role="group" aria-label="Video shape"></div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <div class="label"><span>Length</span></div>
+            <div class="seg" id="vidLengths" role="group" aria-label="Video length"></div>
+          </div>
+          <div class="field">
+            <div class="label"><span>Quality</span></div>
+            <div class="seg" id="vidRes" role="group" aria-label="Video resolution"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="label"><span>Seed</span></div>
+          <div class="seed" data-seed="video"></div>
+        </div>
+        <details class="adv">
+          <summary>Fine-tuning <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="adv-body">
+            <div class="field">
+              <div class="label"><span>Steps</span><span id="vidStepsOut">20</span></div>
+              <input type="range" id="vidSteps" min="8" max="40" step="1" value="20" aria-label="Sampling steps">
+              <p class="hint">Wan 2.2 is tuned for 20. Fewer steps finish sooner with less detail.</p>
+            </div>
+          </div>
+        </details>
+        <div class="note" id="vidNote" hidden></div>
+      </div>
+
+      <!-- VOICE -->
+      <div class="panel" data-panel="voice" role="tabpanel">
+        <div class="panel-head"><h2>Text <em>to speech</em></h2><span class="model">Chatterbox Turbo</span></div>
+        <div class="field">
+          <label class="label" for="voiceText"><span>What should it say?</span><span id="voiceCount">0 / 6000</span></label>
+          <div class="prompt-wrap">
+            <textarea id="voiceText" class="text" maxlength="6000" placeholder="Welcome back. Tonight we're going somewhere new…" spellcheck="true"></textarea>
+            <div class="prompt-tools">
+              <button class="tool" data-surprise="voice" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>Sample script</button>
+              <button class="tool right" data-clear="voiceText" type="button">Clear</button>
+            </div>
+          </div>
+          <div class="tags" id="voiceTags" aria-label="Insert a sound"></div>
+        </div>
+        <div class="field">
+          <div class="label"><span>Voice</span><span id="voiceNote"></span></div>
+          <div class="voices" id="voices"></div>
+          <p class="hint">Add your own voice from a clean 5–20 second recording. It's stored only on your desktop.</p>
+        </div>
+        <details class="adv">
+          <summary>Fine-tuning <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <div class="adv-body">
+            <div class="field">
+              <div class="label"><span>Expressiveness</span><span id="voiceTempOut">0.8</span></div>
+              <input type="range" id="voiceTemp" min="0.4" max="1.2" step="0.05" value="0.8" aria-label="Expressiveness">
+              <p class="hint">Lower is steadier, higher is livelier and less predictable.</p>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- MUSIC -->
+      <div class="panel" data-panel="music" role="tabpanel">
+        <div class="panel-head"><h2>Make <em>a song</em></h2><span class="model">ACE-Step 1.5</span></div>
+        <div class="field">
+          <label class="label" for="musicPrompt"><span>Style</span><span id="musicCount">0</span></label>
+          <div class="prompt-wrap">
+            <textarea id="musicPrompt" class="text short" placeholder="Warm lo-fi hip hop, dusty vinyl drums, mellow Rhodes, rainy night, 80 BPM" spellcheck="true"></textarea>
+            <div class="prompt-tools">
+              <button class="tool" data-surprise="music" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>Surprise me</button>
+              <button class="tool right" data-clear="musicPrompt" type="button">Clear</button>
+            </div>
+          </div>
+        </div>
+        <div class="toggles">
+          <label class="toggle"><span><b>Instrumental</b><small>No vocals</small></span><input type="checkbox" id="musicInstr"><span class="switch"></span></label>
+          <label class="toggle" id="autoLyricsRow"><span><b>Write the lyrics for me</b><small>The model writes words that fit the style</small></span><input type="checkbox" id="musicAuto"><span class="switch"></span></label>
+        </div>
+        <div class="field" id="lyricsField">
+          <label class="label" for="musicLyrics"><span>Lyrics</span><span>[verse] [chorus] [bridge]</span></label>
+          <div class="prompt-wrap">
+            <textarea id="musicLyrics" class="text mono" placeholder="[verse]&#10;City lights are fading slow&#10;&#10;[chorus]&#10;Hold on, hold on…" spellcheck="true"></textarea>
+          </div>
+        </div>
+        <div class="field">
+          <div class="label"><span>Length</span><span id="musicDurOut">1:00</span></div>
+          <input type="range" id="musicDur" min="10" max="240" step="5" value="60" aria-label="Song length in seconds">
+        </div>
+        <div class="field">
+          <div class="label"><span>Seed</span></div>
+          <div class="seed" data-seed="music"></div>
+        </div>
+      </div>
+
+      <div class="go-wrap">
+        <div class="queue" id="queue" aria-label="Queue"></div>
+        <button class="go" id="goBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5l2.1 7.4 7.4 2.1-7.4 2.1-2.1 7.4-2.1-7.4L2.5 11l7.4-2.1z"/></svg>
+          <span id="goLabel">Generate</span><span class="sub" id="goSub"></span>
+        </button>
+      </div>
+    </aside>
+  </main>
+
+  <section class="archive" id="archive" aria-label="Archive">
+    <div class="arch-head">
+      <div>
+        <h2>The <em>archive</em></h2>
+        <p id="archSub">Everything you make is kept on your desktop.</p>
+      </div>
+      <div class="arch-tools">
+        <div class="filters" id="filters" role="group" aria-label="Show"></div>
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="search" type="search" placeholder="Search prompts" aria-label="Search prompts">
+        </label>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="arch-empty" id="archEmpty" hidden><b>Nothing here yet.</b>Your first creation will land here the moment it's done.</div>
+    <div id="sentinel" style="height:1px"></div>
+  </section>
+
+  <main class="view chat" id="chatView" aria-label="Chat">
+    <aside class="chat-rail" id="chatRail" aria-label="Conversations">
+      <div class="rail-head">
+        <button class="btn" id="newChat" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
+        <button class="icon-btn" id="railClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="chatSearch" type="search" placeholder="Search chats" aria-label="Search chats">
+      </label>
+      <div class="chat-list" id="chatList"></div>
+    </aside>
+    <div class="rail-scrim" id="railScrim"></div>
+    <section class="chat-main" aria-label="Conversation">
+      <div class="chat-bar">
+        <button class="icon-btn rail-btn" id="railBtn" type="button" aria-label="Show chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+        <div class="chat-title" id="chatTitle">New chat</div>
+        <span class="chip" id="chatModel">Qwen3.6 35B</span>
+        <button class="icon-btn" id="chatNewBtn" type="button" title="New chat" aria-label="New chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4.5-1 10-10a2.1 2.1 0 00-3-3l-10 10L4 20z"/></svg></button>
+        <button class="icon-btn" id="chatSetBtn" type="button" title="Chat settings" aria-label="Chat settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+      </div>
+      <div class="thread" id="thread">
+        <div class="chat-hero" id="chatHero">
+          <span class="eyebrow"><i></i><span id="chatEyebrow">Qwen3.6 35B · running on your desktop</span></span>
+          <h1>Think it<br><em>through, privately.</em></h1>
+          <p>Ask anything. The model runs on your own GPU, with no filters and nothing sent anywhere. Chats are saved on your desktop.</p>
+          <div class="ideas" id="chatIdeas"></div>
+          <div class="chat-recent" id="chatRecent"></div>
+        </div>
+        <div class="msgs" id="msgs"></div>
+      </div>
+      <button class="jump" id="jumpBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0l-6-6m6 6l6-6"/></svg>Latest</button>
+      <div class="chat-compose">
+        <div class="inner">
+          <div class="edit-chip" id="editChip" hidden><span>Editing an earlier message. Sending replaces everything after it.</span><button type="button" id="editCancel">Cancel</button></div>
+          <div class="prompt-wrap chat-box">
+            <div class="attach-row" id="attachRow"></div>
+            <textarea id="chatInput" rows="1" placeholder="Message Lumen…" aria-label="Message"></textarea>
+            <div class="chat-tools">
+              <button class="icon-btn" id="attachBtn" type="button" title="Attach an image" aria-label="Attach an image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5l-7.8 7.8a5 5 0 01-7.1-7.1l8.2-8.2a3.3 3.3 0 014.7 4.7l-8.2 8.2a1.7 1.7 0 01-2.4-2.4l7.5-7.5"/></svg></button>
+              <button class="pill" id="thinkBtn" type="button" aria-pressed="false" title="Let the model reason before it answers (slower, better on hard questions)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/></svg>Think</button>
+              <div class="ctx" id="ctxWrap" hidden>
+                <button class="ctx-ring" id="ctxMeter" type="button" aria-label="Context usage" aria-expanded="false" aria-controls="ctxPop">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle class="trk" cx="12" cy="12" r="9"/><circle class="val" id="ctxArc" cx="12" cy="12" r="9" pathLength="100" stroke-dasharray="0 100"/></svg>
+                </button>
+                <div class="ctx-pop" id="ctxPop" role="tooltip">
+                  <div class="ctx-head"><span>Context</span><b id="ctxPct">0%</b></div>
+                  <div class="ctx-bar"><i id="ctxBar"></i></div>
+                  <dl>
+                    <div><dt>Used</dt><dd id="ctxUsed">0</dd></div>
+                    <div><dt>Available</dt><dd id="ctxLeft">0</dd></div>
+                    <div><dt>Total</dt><dd id="ctxTotal">0</dd></div>
+                  </dl>
+                  <p id="ctxNote">Counted after each reply.</p>
+                </div>
+              </div>
+              <button class="send" id="sendBtn" type="button" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m0 0l-6 6m6-6l6 6"/></svg></button>
+            </div>
+          </div>
+          <div class="chat-foot">Runs on your desktop's GPU · Enter to send, Shift+Enter for a new line</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <main class="view codev" id="codeView" aria-label="Code">
+    <section class="code-hero">
+      <span class="eyebrow"><i></i><span id="codeEyebrow">OpenCode · Qwen3.6 35B · on your desktop</span></span>
+      <h1>Build it<br><em>with an agent.</em></h1>
+      <p>A coding agent that reads, edits and runs your projects on the desktop. Plan, build and hand work to sub-agents, all on your own GPU.</p>
+      <div class="code-cta">
+        <a class="go" id="codeOpen" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>Open workspace</a>
+        <button class="btn" id="codeNew" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New project</button>
+        <div class="note info" id="codeNote" hidden></div>
+      </div>
+      <div class="code-model" id="codeModelRow" hidden>
+        <label for="codeModel">Coding model</label>
+        <span class="sel"><select id="codeModel"></select></span>
+        <small>Takes effect next time Code loads</small>
+      </div>
+      <div class="term" aria-hidden="true">
+        <div><b>plan</b> <span>› read the repo, list the steps</span></div>
+        <div><b>build</b> <span>› edit 3 files, run tests</span></div>
+        <div><i>✓</i> <span>12 passed · 0 failed</span></div>
+        <div><b>@review</b> <span>› sub-agent checks the diff</span></div>
+      </div>
+    </section>
+    <div class="sec-head"><h2>Your <em>projects</em></h2><span id="codeRoot">C:\Lumen\Code</span><button class="btn sm" id="codeManage" type="button">Manage</button></div>
+    <div class="proj-grid" id="projGrid"></div>
+    <details class="tips-wrap" id="codeTips"><summary>How it works</summary>
+    <div class="tips">
+      <div class="tip"><b>One folder per project</b>Each project is its own folder in <code id="tipRoot">C:\Lumen\Code</code> on the desktop, and the agent can only touch that folder. Start each new piece of work with New project. Its files show up in Artifacts and Preview.</div>
+      <div class="tip"><b>Sign in once</b>The workspace asks you to sign in the first time on each device.</div>
+      <div class="tip"><b>Files and GitHub</b>Drop files or folders on the workspace bar to upload them into the open project, or start a project from a folder or a public GitHub repo. Paste a GitHub link into a chat and the agent can read it too.</div>
+    </div>
+    </details>
+    <section class="code-ws" id="codeWs" aria-label="OpenCode workspace">
+      <div class="ws-bar">
+        <button class="btn" id="wsProjects" type="button" title="All projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span>Projects</span></button>
+        <div class="ws-name"><span id="wsName">Workspace</span><button class="icon-btn ws-ren" id="wsRename" type="button" aria-label="Rename this project" title="Rename this project" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4.5-1 10-10a2.1 2.1 0 00-3-3l-10 10L4 20z"/><path d="M13.5 7.5l3 3"/></svg></button></div>
+        <div class="ws-menu-wrap ws-chats">
+          <button class="btn" id="wsChats" type="button" title="Chats in this project" aria-haspopup="menu" aria-expanded="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18.5V7a2.5 2.5 0 012.5-2.5h9A2.5 2.5 0 0119 7v6.5a2.5 2.5 0 01-2.5 2.5H9z"/></svg><span id="wsChatName">Chats</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="ws-menu occ-menu" id="wsChatMenu" role="menu" hidden></div>
+        </div>
+        <span class="ws-up" id="wsUpText" hidden></span>
+        <div class="ws-menu-wrap">
+          <button class="btn" id="wsUpload" type="button" title="Upload files into this project (or drop them on this bar)" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 19.5h14"/></svg><span>Upload</span></button>
+          <div class="ws-menu" id="wsUpMenu" role="menu" hidden>
+            <div class="ws-menu-head" id="wsUpInto"></div>
+            <button type="button" role="menuitem" data-pick="files">Files…</button>
+            <button type="button" role="menuitem" data-pick="dir" class="dir-only">A folder…</button>
+            <div class="ws-menu-foot">or drop them on this bar · up to 2 GB a file</div>
+          </div>
+        </div>
+        <button class="icon-btn" id="wsReload" type="button" aria-label="Reload workspace" title="Reload workspace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/></svg></button>
+        <a class="icon-btn" id="wsNewTab" href="#" target="_blank" rel="noopener" aria-label="Open workspace in a new tab" title="Open in a new tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4"/></svg></a>
+      </div>
+      <div class="ws-tabs" id="wsTabs" role="tablist" aria-label="Workspace views">
+        <button type="button" role="tab" data-tab="ws" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>Workspace</button>
+        <button type="button" role="tab" data-tab="art" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7a2 2 0 00-2 2v13a2 2 0 002 2h10a2 2 0 002-2V8.5z"/><path d="M14 3.5v5h5M9 13h6M9 16.5h4"/></svg>Artifacts<span class="ct" id="wsArtCount"></span></button>
+        <button type="button" role="tab" data-tab="prev" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z"/><circle cx="12" cy="12" r="3"/></svg>Preview</button>
+        <button type="button" role="tab" data-tab="set" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Settings</button>
+      </div>
+      <div class="ws-progress" id="wsProgress" hidden><i></i></div>
+      <div class="ws-drop" id="wsDrop" hidden><span>Drop to upload into <b id="wsDropInto"></b></span></div>
+      <div class="ws-stage" id="wsStage">
+        <section class="ws-pane art" id="wsArt" role="tabpanel" aria-label="Artifacts" hidden>
+          <div class="pane-head">
+            <div class="pane-title"><b id="artTitle">Artifacts</b><small id="artMeta"></small></div>
+            <button class="btn" id="artZip" type="button" title="Download this project as a zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg><span>Download all</span></button>
+            <button class="icon-btn" id="artRefresh" type="button" aria-label="Refresh" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/></svg></button>
+          </div>
+          <div class="art-list" id="artList"></div>
+        </section>
+        <section class="ws-pane prev" id="wsPrev" role="tabpanel" aria-label="Preview" hidden>
+          <div class="pane-head">
+            <span class="sel prev-sel"><select id="prevFile" aria-label="File to preview"></select></span>
+            <button class="icon-btn" id="prevReload" type="button" aria-label="Reload preview" title="Reload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/></svg></button>
+            <a class="icon-btn" id="prevOpen" href="#" target="_blank" rel="noopener" aria-label="Open in a new tab" title="Open in a new tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4"/></svg></a>
+            <a class="icon-btn" id="prevDl" href="#" aria-label="Download this file" title="Download this file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg></a>
+          </div>
+          <div class="prev-body" id="prevBody"></div>
+        </section>
+        <section class="ws-pane set" id="wsSet" role="tabpanel" aria-label="Settings" hidden>
+          <div class="pane-head">
+            <div class="pane-title"><b>All Lumen Code projects</b><small id="setMeta"></small></div>
+            <button class="icon-btn" id="setRefresh" type="button" aria-label="Refresh" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/></svg></button>
+          </div>
+          <div class="set-bar">
+            <label class="chk"><input type="checkbox" id="setAll"><span>Select all</span></label>
+            <span class="set-sel" id="setSel">None selected</span>
+            <a class="btn" id="setZip" href="#" aria-disabled="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg><span>Download</span></a>
+            <button class="btn danger" id="setDel" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2"/></svg><span>Delete</span></button>
+          </div>
+          <div class="set-confirm" id="setConfirm" hidden>
+            <span id="setConfirmText"></span>
+            <button class="btn" id="setNo" type="button">Cancel</button>
+            <button class="btn danger solid" id="setYes" type="button">Delete for good</button>
+          </div>
+          <div class="set-list" id="setList"></div>
+        </section>
+        <div class="ws-auth" id="wsAuth" hidden>
+          <form class="card" id="wsAuthForm" aria-labelledby="wsAuthTitle" autocomplete="on">
+            <h3 id="wsAuthTitle">Sign in</h3>
+            <p>Sign in to the workspace</p>
+            <label class="ws-field"><span>Username</span><input id="wsUser" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+            <label class="ws-field"><span>Password</span><input id="wsPass" name="password" type="password" autocomplete="current-password" required></label>
+            <div class="ws-auth-err" id="wsAuthErr" role="alert" hidden></div>
+            <button class="go" id="wsSignIn" type="submit">Sign in</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<div class="boot" id="boot" role="dialog" aria-modal="true" aria-labelledby="bootTitle">
+  <div class="boot-card">
+    <div class="orb"><span class="mark"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 1.5l2.1 7.4 7.4 2.1-7.4 2.1-2.1 7.4-2.1-7.4L2.5 11l7.4-2.1z"/></svg></span></div>
+    <span class="eyebrow"><i></i><span id="bootEyebrow">Switching your desktop's GPU</span></span>
+    <h2 id="bootTitle">Loading <em>Chat…</em></h2>
+    <p id="bootText"></p>
+    <ol class="boot-steps" id="bootSteps"></ol>
+    <div class="sw-bar"><i></i></div>
+    <div class="boot-time" id="bootTime"></div>
+    <div class="row">
+      <button class="btn" id="bootBack" type="button">Back</button>
+      <button class="go" id="bootGo" type="button" hidden><span id="bootGoLabel">Load</span></button>
+    </div>
+  </div>
+</div>
+
+  <footer class="foot">
+    <span>Lumen Studio · Qwen-Image · Wan 2.2 · Chatterbox · ACE-Step, all running on your desktop</span>
+    <span>Saved on the desktop in <code>C:\Lumen\Studio</code></span>
+  </footer>
+</div>
+
+<dialog class="lb" id="lb" aria-label="Viewer">
+  <div class="lb-view" id="lbView">
+    <img id="lbImg" alt="">
+    <video id="lbVid" playsinline controls loop preload="metadata" hidden></video>
+    <div id="lbAudio" hidden></div>
+    <button class="lb-nav prev" id="lbPrev" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="lb-nav next" id="lbNext" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+  <div class="lb-side">
+    <div class="lb-top">
+      <span class="count" id="lbCount"></span>
+      <button class="icon-btn" id="lbClose" aria-label="Close viewer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <p class="lb-prompt" id="lbPrompt"></p>
+    <p class="lb-section lb-lyrics" id="lbLyricsHead" hidden>Lyrics</p>
+    <pre class="lyrics lb-lyrics" id="lbLyrics" hidden></pre>
+    <dl class="specs" id="lbSpecs"></dl>
+    <div class="lb-actions" id="lbActions"></div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="picker" aria-label="Choose an image">
+  <div class="sheet-head"><h3>Choose <em>an image</em></h3><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body"><div class="pick-grid" id="pickGrid"></div></div>
+</dialog>
+
+<dialog class="sheet" id="voiceSheet" aria-label="Add a voice">
+  <div class="sheet-head"><h3>Add <em>a voice</em></h3><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <div class="field">
+      <label class="label" for="vName"><span>Name</span></label>
+      <input class="text-input" id="vName" maxlength="40" placeholder="e.g. Narrator, Me, Grandpa" autocomplete="off">
+    </div>
+    <div class="field">
+      <div class="label"><span>Sample</span><span>5–20 seconds, one speaker, no music</span></div>
+      <div class="rec" id="vRec"><span class="rec-dot"></span><span class="rec-time" id="vRecTime">No sample yet</span>
+        <button class="tool" id="vRecBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg><span>Record</span></button>
+        <button class="tool" id="vUpBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 19.5h14"/></svg>Upload</button>
+      </div>
+      <audio id="vPreview" controls hidden></audio>
+      <input type="file" id="vFile" accept="audio/*" hidden>
+    </div>
+    <div class="note info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.5M12 11v5"/></svg><span>Only clone voices you have permission to use. Chatterbox adds an inaudible watermark to everything it generates.</span></div>
+    <div class="sheet-actions"><button class="btn" data-close type="button">Cancel</button><button class="btn primary inline" id="vSave" type="button" disabled>Save voice</button></div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="chatSheet" aria-label="Chat settings">
+  <div class="sheet-head"><h3>Chat <em>settings</em></h3><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body" style="display:flex;flex-direction:column;gap:18px">
+    <div class="field"><div class="label"><span>Persona</span></div><div class="seg" id="presetSeg"></div><p class="preset-note" id="presetNote"></p></div>
+    <div class="field"><div class="label"><span>System prompt</span><span>this chat</span></div><textarea class="sys" id="sysPrompt" placeholder="Optional instructions the model follows for this whole chat."></textarea></div>
+    <div class="field"><div class="label"><span>Creativity</span><span id="tempVal">0.7</span></div><input type="range" id="tempRange" min="0" max="1.5" step="0.05" value="0.7"></div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="projSheet" aria-label="New project">
+  <div class="sheet-head"><h3>New <em>project</em></h3><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body" style="display:flex;flex-direction:column;gap:16px">
+    <div class="seg" id="projKind" role="group" aria-label="Start from">
+      <button type="button" data-kind="empty" aria-pressed="true">Empty</button>
+      <button type="button" data-kind="files" aria-pressed="false">Files or folder</button>
+      <button type="button" data-kind="github" aria-pressed="false">GitHub</button>
+    </div>
+    <div class="field" id="projGhField" hidden><div class="label"><span>Repository</span><span>public repos</span></div>
+      <input class="text-input" id="projGh" type="text" placeholder="owner/repo or https://github.com/owner/repo" autocomplete="off" spellcheck="false" inputmode="url"></div>
+    <div class="field" id="projFilesField" hidden><div class="label"><span>Start from</span><span id="projFilesInfo">nothing chosen</span></div>
+      <div class="proj-pick"><button class="btn" type="button" data-pick="files">Choose files</button><button class="btn dir-only" type="button" data-pick="dir">Choose a folder</button></div></div>
+    <div class="field"><div class="label"><span>Name</span><span id="projPath"></span></div>
+      <input class="text-input" id="projName" type="text" maxlength="60" placeholder="my-app" autocomplete="off" spellcheck="false"></div>
+    <div class="note" id="projErr" hidden></div>
+    <button class="go" id="projCreate" type="button" disabled style="height:48px;margin:0">Create project</button>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="costSheet" aria-label="Power and cost">
+  <div class="sheet-head"><h3>Power <em>&amp; cost</em></h3><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body" id="costBody">
+    <div class="seg" id="costRange" role="group" aria-label="Period">
+      <button type="button" data-r="today" aria-pressed="true">Today</button><button type="button" data-r="week" aria-pressed="false">7 days</button><button type="button" data-r="month" aria-pressed="false">Month</button><button type="button" data-r="all" aria-pressed="false">All time</button>
+    </div>
+    <div id="costSummary">
+      <div class="cost-hero">
+        <div><div class="big" id="costBig">–</div></div>
+        <div class="cost-now"><b id="costWatts">– W</b><span>at the wall now</span></div>
+        <div class="sub" id="costSub"></div>
+      </div>
+    </div>
+    <div class="cost-split" id="costSplit" aria-hidden="true"></div>
+    <ul class="cost-legend" id="costLegend"></ul>
+    <div class="cost-stats" id="costStats"></div>
+    <div class="cost-foot"><button class="btn primary inline" id="costDetailsBtn" type="button">Details</button></div>
+    <details class="cost-rate" id="costRate">
+      <summary><span>Rate · <span id="costUtil">Your utility</span></span><b id="costRateVal">–</b></summary>
+      <div class="in">
+        <div class="grid">
+          <label>Supply ¢/kWh<input id="rateSupply" inputmode="decimal" autocomplete="off"></label>
+          <label>Delivery ¢/kWh<input id="rateDelivery" inputmode="decimal" autocomplete="off"></label>
+          <button class="btn" id="rateSave" type="button">Save</button>
+        </div>
+        <p id="rateNote"></p>
+        <p id="powerNote"></p>
+      </div>
+    </details>
+  </div>
+  <div class="sheet-body" id="costDetail" hidden>
+    <button class="btn cost-back" id="costBack" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <div class="seg" id="costTab" role="group" aria-label="Show">
+      <button type="button" data-t="studio" aria-pressed="true">Studio</button><button type="button" data-t="chats" aria-pressed="false">Chats</button><button type="button" data-t="other" aria-pressed="false">Other</button>
+    </div>
+    <ul class="cost-rows" id="costRows"></ul>
+  </div>
+</dialog>
+<input type="file" id="upFiles" multiple hidden>
+<input type="file" id="upDir" multiple webkitdirectory hidden>
+<input type="file" id="chatFile" accept="image/*" multiple hidden>
+<input type="file" id="imgFile" accept="image/*" hidden>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
