@@ -38,8 +38,10 @@ const IC = {
 };
 
 /* ---------------- models & modes ---------------- */
-const PROFILE_LABEL = { turbo: 'Z-Image Turbo', quality: 'Qwen-Image 2512', real: 'Qwen-Image 2.1', max: 'Qwen-Image 2.1 Max', turbo21: 'Qwen-Image 2.1 Turbo', edit: 'Qwen-Image 2.1 Edit', video: 'Wan 2.2 5B' };
-const ENGINE_LABEL = { image: 'Images', voice: 'Chatterbox Turbo', music: 'ACE-Step 1.5', llm: 'Chat', code: 'Code' };
+// Image profiles, labels, picker and step ranges come from the gateway (/gw/ui.js, built from C:\AI\config\models.json).
+const UI = window.LUMEN_UI || {};
+const PROFILE_LABEL = Object.assign({}, UI.labels);
+const ENGINE_LABEL = Object.assign({ image: 'Images', voice: 'Voice', music: 'Music', llm: 'Chat', code: 'Code' }, UI.engines);
 const MODES = [
   { key: 'image', label: 'Image', icon: IC.image, go: 'Generate', verb: 'image' },
   { key: 'edit', label: 'Edit', icon: IC.edit, go: 'Edit image', verb: 'edit' },
@@ -49,27 +51,31 @@ const MODES = [
 ];
 const HERO = {
   image: ['Make light<br><em>out of words.</em>', 'Describe a scene and press Generate. Every image is saved to your desktop and waits for you in the archive.'],
-  edit: ['Change anything,<br><em>keep the rest.</em>', 'Pick an image, say what should change, and Qwen-Image 2.1 repaints just that part.'],
-  video: ['Set it<br><em>in motion.</em>', 'Experimental. Describe a shot, or start from one of your images, and Wan 2.2 turns it into a short, often wonderfully wrong clip.'],
+  edit: ['Change anything,<br><em>keep the rest.</em>', 'Pick an image, say what should change, and the model repaints just that part.'],
+  video: ['Set it<br><em>in motion.</em>', 'Experimental. Describe a shot, or start from one of your images, and the model turns it into a short, often wonderfully wrong clip.'],
   voice: ['Give it<br><em>a voice.</em>', 'Type a script and pick a voice. Add your own from a short recording; it stays on your desktop.'],
-  music: ['A song<br><em>in a minute.</em>', 'Describe the style, write lyrics or let the model write them, and ACE-Step composes the track.']
+  music: ['A song<br><em>in a minute.</em>', 'Describe the style, write lyrics or let the model write them, and the model composes the track.']
 };
 const RATIOS = [['1:1',1,1],['4:5',4,5],['3:4',3,4],['2:3',2,3],['9:16',9,16],['4:3',4,3],['3:2',3,2],['16:9',16,9],['21:9',21,9]];
 const SIZES = [['draft','Draft',0.5],['standard','Standard',1.0],['high','High',1.6]];
 const FORMATS = [['png','PNG'],['jpeg','JPEG']];
-const IMG_MODELS = [['turbo21', 'Turbo', 'Qwen-Image 2.1 Turbo, about 10 s'], ['real', 'Standard', 'Qwen-Image 2.1, about a minute'], ['max', 'Realistic', 'Qwen-Image 2.1 at native 2K, slow']];
-const STEP_RANGE = { turbo21: [8, 8, 8, '2.1 Turbo uses a fixed 8-step schedule.'],
-                     turbo: [4, 16, 8, 'Z-Image Turbo is tuned for 8. More steps add detail but take longer.'],
-                     quality: [10, 40, 20, 'Qwen-Image 2512 is tuned for 20. Each step adds time.'],
-                     real: [20, 60, 40, 'Qwen-Image 2.1 is tuned for 40. Fewer steps finish sooner with less detail.'],
-                     max: [30, 80, 50, 'Realistic renders at the model’s native 2K for the most natural detail. Expect several minutes per image.'] };
-// Max ('Realistic' in the picker since 2026-11-18) is the Standard model (engine profile 'real') at 4x the pixels and more steps.
-const engProfile = m => m === 'max' ? 'real' : m;
-// Qwen-Image 2.1 Turbo's request (tests\ab-2026-11-16\turbo-profile.md): 8 steps, euler, cfg 1 (the negative prompt has no effect), fixed sigmas.
-const TURBO21_SP = { sample_steps: 8, sample_method: 'euler', guidance: { txt_cfg: 1.0 }, custom_sigmas: [1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0] };
-const MAX_MP = { draft: 2.0, standard: 4.0, high: 4.2 };   // Qwen-Image 2.1 is trained up to 2048x2048 / 2752x1536
-// Archive label -> image profile (old Z-Image items have no model or a Z-Image label).
-function profileOf(it) { const m = it.model || ''; return /Qwen-Image 2\.1 Max/.test(m) ? 'max' : /Qwen-Image 2\.1 Turbo/.test(m) ? 'turbo21' : /Qwen-Image 2\.1/.test(m) ? 'real' : /Qwen-Image 2512/.test(m) ? 'quality' : 'turbo'; }
+const IMG_MODELS = UI.picker || [];   // [key, label, note] per picker button
+const STEP_DEFAULT = [4, 60, 20, ''];
+const STEP_RANGE = Object.assign({}, UI.steps);   // key -> [min, max, default, hint]
+const stepRange = m => STEP_RANGE[m] || STEP_DEFAULT;
+// Picker keys that run on another profile's weights (for example a higher-resolution variant of one model).
+const engProfile = m => (UI.alias && UI.alias[m]) || m;
+const SAMPLER = UI.sampler || {};   // key -> extra sample_params for that model (guidance, sampler, sigmas, ...)
+const SIZE_MP = UI.sizeMp || {};    // key -> { draft, standard, high } megapixels, for models that need their own sizes
+const DEFAULT_MODEL = UI.defaultModel || (IMG_MODELS[0] || [''])[0];
+const EDIT_PROFILE = UI.editProfile || DEFAULT_MODEL;
+const FALLBACK_PROFILE = UI.fallbackProfile || DEFAULT_MODEL;
+// Archive label -> image profile: the longest configured label contained in the item's model name wins.
+const LABEL_KEYS = Object.keys(PROFILE_LABEL).filter(k => k !== 'video').sort((x, y) => PROFILE_LABEL[y].length - PROFILE_LABEL[x].length);
+function profileOf(it) {
+  const m = it.model || '', k = LABEL_KEYS.find(k => PROFILE_LABEL[k] && m.includes(PROFILE_LABEL[k]));
+  return k === 'edit' ? EDIT_PROFILE : (k || FALLBACK_PROFILE);
+}
 const EDIT_SIZES = [['small', 'Small', 0.35], ['draft', 'Medium', 0.6], ['standard', 'Full', 1.0]];
 const VID_SHAPES = [['16:9', '16:9'], ['9:16', '9:16'], ['1:1', '1:1']];
 const VID_RES = [['480', '480p'], ['704', '720p']];
@@ -143,7 +149,7 @@ const store = {
 };
 const DEFAULTS = {
   mode: 'image', filter: 'all',
-  image: { prompt: '', model: 'turbo21', ratio: '1:1', size: 'standard', count: 1, steps: { turbo: 8, quality: 20, real: 40, max: 50, turbo21: 8 }, format: 'png', seed: '', seedLock: false },
+  image: { prompt: '', model: DEFAULT_MODEL, ratio: '1:1', size: 'standard', count: 1, steps: Object.fromEntries(Object.entries(STEP_RANGE).map(([k, v]) => [k, v[2]])), format: 'png', seed: '', seedLock: false },
   edit: { prompt: '', size: 'draft', steps: 40, seed: '', seedLock: false, srcId: null, v21: true },
   video: { prompt: '', shape: '16:9', res: '480', len: '2', steps: 20, seed: '', seedLock: false, srcId: null },
   voice: { text: '', voice: '', temp: 0.8 },
@@ -156,12 +162,12 @@ const cfg = (() => {
   else {
     const old = store.get('settings', null);   // v1 page
     if (old) Object.assign(c.image, { prompt: old.prompt || '', ratio: old.ratio || '1:1', size: old.size || 'standard', count: old.count || 1,
-      format: old.format || 'png', seed: old.seed || '', seedLock: !!old.seedLock, steps: { turbo: old.steps || 8, quality: 20 } });
+      format: old.format || 'png', seed: old.seed || '', seedLock: !!old.seedLock, steps: Object.assign({}, DEFAULTS.image.steps) });
   }
-  if (typeof c.image.steps !== 'object') c.image.steps = { turbo: +c.image.steps || 8, quality: 20 };
-  if (!IMG_MODELS.some(m => m[0] === c.image.model)) c.image.model = 'turbo21';   // new devices start on Fast (2.1 Turbo), user's choice 2026-11-16
+  if (typeof c.image.steps !== 'object') c.image.steps = Object.assign({}, DEFAULTS.image.steps);
+  if (!IMG_MODELS.some(m => m[0] === c.image.model)) c.image.model = DEFAULT_MODEL;
   if (!MODES.some(m => m.key === c.mode)) c.mode = 'image';
-  if (!c.edit.v21) { c.edit.v21 = true; c.edit.steps = 40; }   // 2511's 20-step default -> Qwen-Image 2.1's 40
+  if (!c.edit.v21) { c.edit.v21 = true; c.edit.steps = 40; }   // older pages stored a 20-step default; the edit model is tuned for 40
   c.edit.steps = Math.min(60, Math.max(20, +c.edit.steps || 40));
   return c;
 })();
@@ -211,7 +217,7 @@ const kindOf = it => (it && it.kind) || 'image';
 const isAudio = it => ['voice', 'music'].includes(kindOf(it));
 function dims(ratioKey = cfg.image.ratio, sizeKey = cfg.image.size, model = cfg.image.model) {
   const [, a, b] = RATIOS.find(r => r[0] === ratioKey) || RATIOS[0];
-  const mp = model === 'max' ? (MAX_MP[sizeKey] || 4.0) : (SIZES.find(s => s[0] === sizeKey) || SIZES[1])[2];
+  const mp = SIZE_MP[model] ? (SIZE_MP[model][sizeKey] || 4.0) : (SIZES.find(s => s[0] === sizeKey) || SIZES[1])[2];
   const px = mp * 1024 * 1024;
   return { w: r64(Math.sqrt(px * a / b)), h: r64(Math.sqrt(px * b / a)) };
 }
@@ -293,14 +299,19 @@ function estimate(mode) {
 /* ---------------- engine status ---------------- */
 function needFor(mode) {
   if (mode === 'image') return { engine: 'image', profile: engProfile(cfg.image.model) };
-  if (mode === 'edit') return { engine: 'image', profile: 'real' };   // Qwen-Image 2.1 edits (same weights as Realistic) since 2026-11-17
+  if (mode === 'edit') return { engine: 'image', profile: EDIT_PROFILE };
   if (mode === 'video') return { engine: 'image', profile: 'video' };
   return { engine: mode, profile: null };
+}
+// Fill model names in the static page from the configured labels (elements with data-label="edit|video|voice|music").
+function applyUiLabels() {
+  const L = Object.assign({}, ENGINE_LABEL, PROFILE_LABEL);
+  document.querySelectorAll('[data-label]').forEach(e => { const t = L[e.dataset.label]; if (t) e.textContent = t; });
 }
 function needLabel(n) { return n.profile ? PROFILE_LABEL[n.profile] : n.engine === 'image' ? 'the image engine' : ENGINE_LABEL[n.engine]; }
 function installed(mode) {
   const i = (S.st && S.st.installed) || {};
-  if (mode === 'image') return cfg.image.model === 'turbo' || i[engProfile(cfg.image.model)] !== false;
+  if (mode === 'image') return cfg.image.model === UI.preloadProfile || i[engProfile(cfg.image.model)] !== false;
   if (mode === 'edit') return i.edit !== false;
   if (mode === 'video') return i.video !== false;
   if (mode === 'voice') return i.voice !== false;
@@ -597,8 +608,8 @@ function setMode(mode, user) {
 
 function syncComposer() {
   // image
-  const model = cfg.image.model, [lo, hi, , hint] = STEP_RANGE[model];
-  const steps = Math.min(hi, Math.max(lo, cfg.image.steps[model] || STEP_RANGE[model][2]));
+  const model = cfg.image.model, [lo, hi, , hint] = stepRange(model);
+  const steps = Math.min(hi, Math.max(lo, cfg.image.steps[model] || stepRange(model)[2]));
   cfg.image.steps[model] = steps;
   const st = $('#imgSteps'); st.min = lo; st.max = hi; st.value = steps; st.style.setProperty('--p', (hi > lo ? (steps - lo) / (hi - lo) * 100 : 100) + '%');
   st.closest('.field').hidden = hi === lo;   // 2.1 Turbo: the sigma schedule fixes the step count
@@ -897,9 +908,7 @@ function runImage(s) {
   const d = o.w ? { w: o.w, h: o.h } : dims(s.ratio, s.size, s.model);
   const steps = o.steps || s.steps[s.model];
   const sp = { sample_steps: steps };
-  if (s.model === 'turbo') sp.guidance = { txt_cfg: 1.0 };
-  else if (s.model === 'turbo21') Object.assign(sp, TURBO21_SP);
-  else if (s.model === 'real' || s.model === 'max') sp.guidance = { txt_cfg: 6.0 };   // sd.cpp's Qwen-Image 2.1 recipe: euler, cfg 6
+  if (SAMPLER[s.model]) Object.assign(sp, SAMPLER[s.model]);
   const body = { prompt: s.prompt, negative_prompt: '', width: d.w, height: d.h, seed: s.seedValue,
     batch_count: o.count || s.count, output_format: s.format, output_compression: s.format === 'jpeg' ? 92 : 100,
     preview: 'proj', preview_interval: 1, sample_params: sp };
@@ -1240,7 +1249,7 @@ function remix(it) {
     const parent = it.parent && S.gallery.find(g => g.id === it.parent); if (parent) setSourceItem('edit', parent);
   } else if (k === 'image') {
     setMode('image', false);
-    cfg.image.model = IMG_MODELS.some(m => m[0] === profileOf(it)) ? profileOf(it) : 'real';
+    cfg.image.model = IMG_MODELS.some(m => m[0] === profileOf(it)) ? profileOf(it) : DEFAULT_MODEL;
     T.image.value = it.prompt || ''; T.image.dispatchEvent(new Event('input'));
     cfg.image.ratio = nearestRatio(it.width / it.height);
     const m = it.width * it.height / 1048576; let bs = SIZES[1], bm = 9; for (const s of SIZES) { const d = Math.abs(s[2] - m); if (d < bm) { bm = d; bs = s; } }
@@ -1422,15 +1431,15 @@ function renderLb() {
   const specs = $('#lbSpecs'); specs.innerHTML = '';
   const file = `${(it.format || String(it.file).split('.').pop() || '').toUpperCase()} · ${fmtBytes(it.bytes)}`;
   let rows;
-  if (k === 'image') rows = [['Size', `${it.width} × ${it.height}`], ['Model', it.model ? String(it.model).split(/[\\/]/).pop() : 'Z-Image Turbo'],
+  if (k === 'image') rows = [['Size', `${it.width} × ${it.height}`], ['Model', it.model ? String(it.model).split(/[\\/]/).pop() : (PROFILE_LABEL[FALLBACK_PROFILE] || 'Image model')],
     it.mode === 'upscale' || it.mode === 'edit' ? ['Made by', it.mode === 'edit' ? 'Editing' : 'Upscaling'] : ['Seed', it.seed || '—'],
     ['Steps', it.steps || '—'], ['Render time', fmtMs(it.ms)], ['Created', fmtDate(it.created)], ['File', file]];
   else if (k === 'video') rows = [['Size', `${it.width} × ${it.height}`], ['Length', `${(it.duration || 0).toFixed(1)}s · ${it.frames || '?'} frames`],
-    ['Model', it.model || 'Wan 2.2 5B'], ['Seed', it.seed || '—'], ['Steps', it.steps || '—'], ['Render time', fmtMs(it.ms)], ['Created', fmtDate(it.created)], ['File', file]];
-  else if (k === 'voice') rows = [['Voice', it.voice || 'Default'], ['Length', fmtDur(it.duration)], ['Model', it.model || 'Chatterbox Turbo'],
+    ['Model', it.model || PROFILE_LABEL.video || 'Video model'], ['Seed', it.seed || '—'], ['Steps', it.steps || '—'], ['Render time', fmtMs(it.ms)], ['Created', fmtDate(it.created)], ['File', file]];
+  else if (k === 'voice') rows = [['Voice', it.voice || 'Default'], ['Length', fmtDur(it.duration)], ['Model', it.model || ENGINE_LABEL.voice],
     ['Render time', fmtMs(it.ms)], ['Created', fmtDate(it.created)], ['File', file]];
   else rows = [['Length', fmtDur(it.duration)], ['Tempo', it.bpm ? it.bpm + ' BPM' : '—'], ['Key', it.key || '—'], ['Seed', it.seed || '—'],
-    ['Model', it.model || 'ACE-Step 1.5'], ['Render time', fmtMs(it.ms)], ['Created', fmtDate(it.created)], ['File', file]];
+    ['Model', it.model || ENGINE_LABEL.music], ['Render time', fmtMs(it.ms)], ['Created', fmtDate(it.created)], ['File', file]];
   for (const [a, b] of rows) { const d = el('div', 'spec'); d.append(el('dt', null, a), el('dd', null, String(b))); specs.append(d); }
   renderLbActions(it);
   $('#lbPrev').disabled = S.lbIndex <= 0; $('#lbNext').disabled = S.lbIndex >= S.lbList.length - 1;
@@ -1516,7 +1525,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) tick
 const VIEWS = ['studio', 'chat', 'code'];
 const VIEW_NEED = { chat: { engine: 'llm', profile: null }, code: { engine: 'code', profile: null } };
 const V = { view: 'studio', prev: 'studio', boot: null, bootTimer: null };
-const chatModelName = () => (S.st && S.st.chat_model) || 'Qwen3.6 35B';
+const chatModelName = () => (S.st && S.st.chat_model) || 'Local model';
 const codeModelName = () => (S.st && S.st.code_model) || chatModelName();
 // Chat and Code are separate modes on the GPU: the gateway reports engine 'llm' (Chat) or 'code' (Code).
 const llmUp = () => !!(S.st && S.reachable && S.st.engine === 'llm' && S.st.ready && !switching());
@@ -1604,7 +1613,7 @@ function bootSteps(v, st) {
   steps.push(['Free the GPU', freed ? 'done' : 'active', freed ? '' : llmRun ? 'stopping ' + (run === 'code' ? 'Code' : 'Chat') : 'stopping media']);
   const label = v === 'studio' ? needLabel(want) : v === 'code' ? codeModelName() : chatModelName();
   steps.push(['Load ' + label, engineUp ? 'done' : freed ? 'active' : 'wait', '']);
-  if (v === 'studio' && want.profile && want.profile !== 'turbo') steps[1][2] = 'weights load on first use';
+  if (v === 'studio' && want.profile && want.profile !== UI.preloadProfile) steps[1][2] = 'weights load on first use';
   if (v === 'code') steps.push(['Start the workspace', st && st.code ? 'done' : engineUp ? 'active' : 'wait', 'OpenCode']);
   return steps;
 }
@@ -1759,7 +1768,7 @@ document.addEventListener('click', e => {
 /* ---------------- chat ---------------- */
 const PRESETS = [
   ['general', 'General', 'A candid, capable assistant.', "You are Lumen, a capable, candid assistant running privately on the user's own computer. Answer directly and completely. Use Markdown when it helps (headings, lists, tables, code blocks)."],
-  ['prompts', 'Prompt writer', 'Writes prompts for Studio. "Use in Studio" picks them up.', "You write prompts for Lumen Studio's generators: images (Qwen-Image 2.1), image edits (Qwen-Image 2.1), voice (Chatterbox) and music (ACE-Step: style tags plus lyrics with [verse]/[chorus] sections). When asked for a prompt, reply with the prompt alone in one fenced code block labelled prompt, then at most one short line of notes. Be vivid and concrete: subject, setting, light, lens, mood, style."],
+  ['prompts', 'Prompt writer', 'Writes prompts for Studio. "Use in Studio" picks them up.', "You write prompts for Lumen Studio's generators: images, image edits, voice and music (style tags plus lyrics with [verse]/[chorus] sections). When asked for a prompt, reply with the prompt alone in one fenced code block labelled prompt, then at most one short line of notes. Be vivid and concrete: subject, setting, light, lens, mood, style."],
   ['coder', 'Coder', 'Working code first, short explanations.', 'You are a senior software engineer. Give correct, complete, runnable code first, then a brief explanation. Prefer minimal diffs when changing existing code. Say when you are unsure.'],
   ['custom', 'Custom', 'Your own instructions below.', '']
 ];
@@ -2933,6 +2942,7 @@ const Cost = (() => {
   }
   function open() { showDetail(false); render(); load(); $('#costSheet').showModal(); }
   function init() {
+    applyUiLabels();
     if (!$('#costPill')) return;
     $('#costPill').addEventListener('click', open);
     $('#costRange').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; range = b.dataset.r; render(); });

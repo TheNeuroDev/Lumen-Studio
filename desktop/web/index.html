@@ -51,7 +51,7 @@
       <div class="canvas is-empty" id="canvas">
         <div class="hero" id="hero">
           <div class="hero-inner">
-            <span class="eyebrow"><i></i><span id="heroEyebrow">Qwen-Image 2.1 · running on your desktop</span></span>
+            <span class="eyebrow"><i></i><span id="heroEyebrow">Running on your desktop</span></span>
             <h1 id="heroTitle">Make light<br><em>out of words.</em></h1>
             <p id="heroText">Describe a scene and press Generate. Every image is saved to your desktop and waits for you in the archive.</p>
             <div class="ideas" id="ideas"></div>
@@ -162,7 +162,7 @@
 
       <!-- EDIT -->
       <div class="panel" data-panel="edit" role="tabpanel">
-        <div class="panel-head"><h2>Edit <em>an image</em></h2><span class="model">Qwen-Image 2.1</span></div>
+        <div class="panel-head"><h2>Edit <em>an image</em></h2><span class="model" data-label="edit">Edit model</span></div>
         <div class="field">
           <div class="label"><span>Image to edit</span></div>
           <div class="src" data-src="edit"></div>
@@ -192,7 +192,7 @@
             <div class="field">
               <div class="label"><span>Steps</span><span id="editStepsOut">40</span></div>
               <input type="range" id="editSteps" min="20" max="60" step="1" value="40" aria-label="Sampling steps">
-              <p class="hint">Qwen-Image 2.1 is tuned for 40. Fewer steps are faster but softer.</p>
+              <p class="hint">Fewer steps are faster but softer.</p>
             </div>
           </div>
         </details>
@@ -201,7 +201,7 @@
 
       <!-- VIDEO -->
       <div class="panel" data-panel="video" role="tabpanel">
-        <div class="panel-head"><h2>Make <em>a video</em></h2><span class="model"><span class="exp">Experimental</span> Wan 2.2 TI2V 5B</span></div>
+        <div class="panel-head"><h2>Make <em>a video</em></h2><span class="model"><span class="exp">Experimental</span> <span data-label="video">Video model</span></span></div>
         <div class="field">
           <label class="label" for="vidPrompt"><span>Prompt</span><span id="vidCount">0</span></label>
           <div class="prompt-wrap">
@@ -240,7 +240,7 @@
             <div class="field">
               <div class="label"><span>Steps</span><span id="vidStepsOut">20</span></div>
               <input type="range" id="vidSteps" min="8" max="40" step="1" value="20" aria-label="Sampling steps">
-              <p class="hint">Wan 2.2 is tuned for 20. Fewer steps finish sooner with less detail.</p>
+              <p class="hint">Fewer steps finish sooner with less detail.</p>
             </div>
           </div>
         </details>
@@ -249,7 +249,7 @@
 
       <!-- VOICE -->
       <div class="panel" data-panel="voice" role="tabpanel">
-        <div class="panel-head"><h2>Text <em>to speech</em></h2><span class="model">Chatterbox Turbo</span></div>
+        <div class="panel-head"><h2>Text <em>to speech</em></h2><span class="model" data-label="voice">Voice model</span></div>
         <div class="field">
           <label class="label" for="voiceText"><span>What should it say?</span><span id="voiceCount">0 / 6000</span></label>
           <div class="prompt-wrap">
@@ -280,7 +280,7 @@
 
       <!-- MUSIC -->
       <div class="panel" data-panel="music" role="tabpanel">
-        <div class="panel-head"><h2>Make <em>a song</em></h2><span class="model">ACE-Step 1.5</span></div>
+        <div class="panel-head"><h2>Make <em>a song</em></h2><span class="model" data-label="music">Music model</span></div>
         <div class="field">
           <label class="label" for="musicPrompt"><span>Style</span><span id="musicCount">0</span></label>
           <div class="prompt-wrap">
@@ -357,13 +357,13 @@
       <div class="chat-bar">
         <button class="icon-btn rail-btn" id="railBtn" type="button" aria-label="Show chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
         <div class="chat-title" id="chatTitle">New chat</div>
-        <span class="chip" id="chatModel">Qwen3.6 35B</span>
+        <span class="chip" id="chatModel">Local model</span>
         <button class="icon-btn" id="chatNewBtn" type="button" title="New chat" aria-label="New chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4.5-1 10-10a2.1 2.1 0 00-3-3l-10 10L4 20z"/></svg></button>
         <button class="icon-btn" id="chatSetBtn" type="button" title="Chat settings" aria-label="Chat settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
       </div>
       <div class="thread" id="thread">
         <div class="chat-hero" id="chatHero">
-          <span class="eyebrow"><i></i><span id="chatEyebrow">Qwen3.6 35B · running on your desktop</span></span>
+          <span class="eyebrow"><i></i><span id="chatEyebrow">Running on your desktop</span></span>
           <h1>Think it<br><em>through, privately.</em></h1>
           <p>Ask anything. The model runs on your own GPU, with no filters and nothing sent anywhere. Chats are saved on your desktop.</p>
           <div class="ideas" id="chatIdeas"></div>
@@ -407,7 +407,7 @@
 
   <main class="view codev" id="codeView" aria-label="Code">
     <section class="code-hero">
-      <span class="eyebrow"><i></i><span id="codeEyebrow">OpenCode · Qwen3.6 35B · on your desktop</span></span>
+      <span class="eyebrow"><i></i><span id="codeEyebrow">OpenCode · on your desktop</span></span>
       <h1>Build it<br><em>with an agent.</em></h1>
       <p>A coding agent that reads, edits and runs your projects on the desktop. Plan, build and hand work to sub-agents, all on your own GPU.</p>
       <div class="code-cta">
@@ -532,7 +532,7 @@
 </div>
 
   <footer class="foot">
-    <span>Lumen Studio · Qwen-Image · Wan 2.2 · Chatterbox · ACE-Step, all running on your desktop</span>
+    <span>Lumen Studio · everything runs on your own desktop</span>
     <span>Saved on the desktop in <code>C:\Lumen\Studio</code></span>
   </footer>
 </div>
@@ -656,6 +656,7 @@
 <input type="file" id="imgFile" accept="image/*" hidden>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
+<script src="/gw/ui.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

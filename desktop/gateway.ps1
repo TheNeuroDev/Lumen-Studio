@@ -61,10 +61,40 @@ $UploadMax = 2GB   # per file, /gw/code/upload
 
 # Image-engine model profiles: sd-server recipe + component files (relative to C:\AI\image-models).
 # They come from C:\AI\config\models.json (copy desktop\config\models.example.json and edit it for the models you
-# chose: docs/INSTALL-MODELS.md). The page's picker labels and step ranges (web\app.js IMG_MODELS, PROFILE_LABEL,
-# STEP_RANGE) still name the profile keys, so keep the keys you use in sync until the page reads them from here.
+# chose: docs/INSTALL-MODELS.md). The page gets its picker, labels and step ranges from the same file (the optional
+# "ui" block) through /gw/ui.js; without a "ui" block they are built from the profiles.
 $ModelsCfg = Get-ModelsCfg
 $Profiles = $ModelsCfg.profiles
+
+# What the page needs to know about your image models (served as /gw/ui.js). Built from the profiles, then overridden by
+# the optional "ui" block of models.json. Profiles named 'edit' and 'video' are not offered in the image picker.
+function Get-UiConfig {
+    $labels = [ordered]@{}; $picker = New-Object System.Collections.Generic.List[object]; $steps = [ordered]@{}
+    foreach ($k in $Profiles.Keys) {
+        $labels[$k] = [string]$Profiles[$k].label
+        if ($k -notin 'edit', 'video') { $picker.Add(@($k, $labels[$k], '')); $steps[$k] = @(4, 60, 20, '') }
+    }
+    $r = [ordered]@{ labels = $labels; picker = $picker; steps = $steps; alias = [ordered]@{}; sampler = [ordered]@{}; sizeMp = [ordered]@{}
+                     engines = [ordered]@{}; defaultModel = ''; editProfile = ''; fallbackProfile = ''; preloadProfile = '' }
+    $u = $ModelsCfg.ui
+    if ($u) {
+        foreach ($k in 'labels', 'steps', 'alias', 'sampler', 'sizeMp', 'engines') {
+            if ($u.Contains($k) -and $u[$k]) { foreach ($kk in $u[$k].Keys) { $r[$k][$kk] = $u[$k][$kk] } }
+        }
+        if ($u.Contains('picker') -and $u['picker']) {
+            # Windows PowerShell 5.1 unrolls a one-row array of arrays when it reads JSON: put the row back together.
+            $rows = @($u['picker']); if ($rows.Count -and $rows[0] -isnot [array]) { $rows = , $rows }
+            $picker.Clear(); foreach ($row in $rows) { $picker.Add(@($row)) }
+        }
+        foreach ($k in 'defaultModel', 'editProfile', 'fallbackProfile', 'preloadProfile') { if ($u.Contains($k) -and $u[$k]) { $r[$k] = [string]$u[$k] } }
+    }
+    $first = if ($picker.Count) { [string]$picker[0][0] } else { '' }
+    if (-not $r.defaultModel) { $r.defaultModel = $first }
+    if (-not $r.editProfile) { $r.editProfile = $first }
+    if (-not $r.fallbackProfile) { $r.fallbackProfile = $first }
+    if (-not $r.labels.Contains('edit') -and $r.labels.Contains($r.editProfile)) { $r.labels['edit'] = $r.labels[$r.editProfile] }
+    return $r
+}
 $EngineTimeout = @{ image = 240; voice = 240; music = 600; llm = 300; code = 360 }   # seconds to become ready
 
 foreach ($d in $Web, $Out, $Thumbs, $Trash, $LogDir, $Chats, "$Chats\.trash") { New-Item -ItemType Directory -Force -Path $d | Out-Null }
@@ -739,6 +769,7 @@ function Handle($ctx) {
         $f = if ($path -eq '/favicon.ico') { "$Web\icon-192.png" } else { "$Web$($path -replace '/', '\')" }
         Send-File $ctx $f 'public, max-age=86400'; return
     }
+    if ($m -eq 'GET' -and $path -eq '/gw/ui.js') { Send $ctx 200 ($Utf8.GetBytes('window.LUMEN_UI = ' + (ConvertTo-Json -InputObject (Get-UiConfig) -Depth 12 -Compress) + ';')) 'text/javascript; charset=utf-8'; return }
     if ($path -eq '/gw/status') { Send-Json $ctx 200 (Status); return }
     if ($path -eq '/gw/gallery') {
         $items = New-Object System.Collections.Generic.List[object]

@@ -1,5 +1,5 @@
 {
-  "_comment": "Copy to C:\\AI\\config\\models.json and edit for the models YOU chose (docs/INSTALL-MODELS.md). Paths are relative to C:\\AI\\image-models. Profile keys are what the page refers to; the page currently knows these keys: turbo, quality, real, max, turbo21, edit, video. Use the ones you need and remove the rest. recipe = the sd-server recipe name for that model family (see stable-diffusion.cpp docs).",
+  "_comment": "Copy to C:\\AI\\config\\models.json and edit for the models YOU chose (docs/INSTALL-MODELS.md). Paths are relative to C:\\AI\\image-models. Profile keys are yours to choose (a profile named 'video' is the video model; 'edit' is the edit model). recipe = the sd-server recipe name for that model family (see stable-diffusion.cpp docs).",
   "preload": {
     "diffusion_model": "diffusion_models/YOUR-IMAGE-MODEL.gguf",
     "llm": "text_encoders/YOUR-TEXT-ENCODER.gguf",
@@ -15,5 +15,32 @@
         "vae": "vae/YOUR-VAE.safetensors"
       }
     }
+  },
+  "_ui_comment": "OPTIONAL 'ui' block. Without it the page builds its image picker from your profiles. labels: key -> name shown. picker: [key, button label, note]. steps: key -> [min, max, default, hint]. alias: a picker key that runs another profile's weights. sampler: key -> extra sample_params sent with each request (see the model's stable-diffusion.cpp docs). sizeMp: key -> {draft, standard, high} megapixels. engines: names shown for voice and music. defaultModel / editProfile / fallbackProfile / preloadProfile: profile keys (preloadProfile = the one in 'preload').",
+  "ui": {
+    "picker": [
+      [
+        "turbo",
+        "Fast",
+        "about N seconds on my GPU"
+      ]
+    ],
+    "steps": {
+      "turbo": [
+        4,
+        30,
+        8,
+        "Tuned for 8 steps."
+      ]
+    },
+    "sampler": {
+      "turbo": {
+        "guidance": {
+          "txt_cfg": 1.0
+        }
+      }
+    },
+    "defaultModel": "turbo",
+    "preloadProfile": "turbo"
   }
 }

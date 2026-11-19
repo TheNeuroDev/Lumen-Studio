@@ -93,7 +93,7 @@ function Get-LumenCfg {
 }
 
 # C:\AI\config\models.json: your image/video model profiles and the model sd-server preloads
-# (see config\models.example.json and docs/INSTALL-MODELS.md). Returns @{ profiles = [ordered]@{...}; preload = [ordered]@{...} }.
+# (see config\models.example.json and docs/INSTALL-MODELS.md). Returns @{ profiles; preload; ui; error }.
 # Missing file or bad JSON gives empty profiles/preload and a warning in 'error'; callers decide what that means.
 function ConvertTo-OrderedTable($o) {
     if ($o -is [System.Management.Automation.PSCustomObject]) {
@@ -104,13 +104,14 @@ function ConvertTo-OrderedTable($o) {
     return $o
 }
 function Get-ModelsCfg {
-    $r = @{ profiles = [ordered]@{}; preload = [ordered]@{}; error = $null }
+    $r = @{ profiles = [ordered]@{}; preload = [ordered]@{}; ui = $null; error = $null }
     $f = "$LlmCfgDir\models.json"
     if (-not (Test-Path -LiteralPath $f)) { $r.error = "no ${f}: copy desktop\config\models.example.json there and edit it for your models"; return $r }
     try {
         $d = [IO.File]::ReadAllText($f) | ConvertFrom-Json
         if ($d.profiles) { $r.profiles = ConvertTo-OrderedTable $d.profiles }
         if ($d.preload)  { $r.preload  = ConvertTo-OrderedTable $d.preload }
+        if ($d.ui)       { $r.ui       = ConvertTo-OrderedTable $d.ui }
     } catch { $r.error = "cannot read ${f}: $($_.Exception.Message)" }
     return $r
 }
