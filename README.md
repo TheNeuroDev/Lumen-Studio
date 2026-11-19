@@ -2,8 +2,9 @@
 
 **Your Private, Self hosted AI Dashboard - Chat, Code, Image, Video, Music, and Voice**
 
-You type on your laptop or phone. Your own desktop GPU does the work.
-Everything stays on your machines: models, outputs, chats, logins.
+One PC with a GPU is all you need: it runs the models and serves the page at `http://127.0.0.1:1240/`.
+Optionally, reach it from your phone or another computer over Tailscale.
+Everything stays on your own machines: models, outputs, chats, logins.
 
 Three modes in one dark, phone-friendly web page:
 
@@ -11,11 +12,13 @@ Three modes in one dark, phone-friendly web page:
 - **Chat**: a private chat with your local LLM. History is saved on your desktop.
 - **Code**: an AI coding workspace (OpenCode) with one folder per project, fenced so the model can only touch that folder.
 
-This repo is a **template**. It holds the code only. You bring your own models, secrets, API keys and network names.
+This repo is a **template**. It holds the code only. You bring your own models, secrets and (if you want remote access) network names. Lumen runs local models only; it does not use cloud AI services.
 
 ---
 
 ## How it fits together
+
+Optional remote access is shown on the left. With one PC you skip it and open the page on that PC.
 
 ```
  laptop / phone  ──(Tailscale, private)──►  desktop PC ("Data Center")
@@ -32,10 +35,9 @@ This repo is a **template**. It holds the code only. You bring your own models, 
 
 ## What you need
 
-- **Desktop**: Windows 10/11, NVIDIA GPU, ~150 GB free disk for models.
-- **Tailscale** on every device (free personal plan is fine), with MagicDNS and HTTPS certificates turned on.
-- **OpenSSH Server** on the desktop (only for deploying from a laptop).
-- Optional laptop: Windows + Python 3.11 for the launcher app.
+- **One PC**: Windows 10/11, NVIDIA GPU, free disk for models (size depends on the models you pick).
+- **Optional, for remote access and the Code workspace:** Tailscale (free personal plan is fine) with MagicDNS and HTTPS certificates turned on. The Code workspace needs the HTTPS address even on one PC.
+- **Optional, for a second machine:** OpenSSH Server on the host PC for deploying, and on the laptop Windows + Python 3.11 for the launcher app.
 
 ## Setup (about an hour, mostly downloads)
 
