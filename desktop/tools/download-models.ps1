@@ -26,7 +26,13 @@ $Files = @(
     @('text_encoders',    'Qwen3-VL-8B-Instruct-Q8_0.gguf',   "$HF/unsloth/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q8_0.gguf"),
     @('vae',              'qwen_image_2.1_vae_bf16.safetensors', "$HF/Comfy-Org/Qwen-Image-2.1/resolve/main/vae/qwen_image_2.1_vae_bf16.safetensors"),
     # Edit (since 2026-11-17): Qwen3-VL-8B's vision projector lets Qwen-Image 2.1 take the source image as a reference.
-    @('text_encoders',    'Qwen3-VL-8B-mmproj-F16.gguf',      "$HF/unsloth/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-F16.gguf")
+    @('text_encoders',    'Qwen3-VL-8B-mmproj-F16.gguf',      "$HF/unsloth/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-F16.gguf"),
+    # Fast image mode ('turbo21' in the page): Qwen-Image 2.1 Turbo, 8 steps, same encoder + VAE as 2.1 (7.6 GB).
+    @('diffusion_models', 'qwen-image-2.1-turbo-Q8_0.gguf',   "$HF/unsloth/Qwen-Image-2.1-Turbo-GGUF/resolve/main/qwen-image-2.1-turbo-Q8_0.gguf"),
+    # Z-Image Turbo: the model sd-server preloads when the image engine starts (mode.ps1 $ImgArgs) + its encoder and VAE.
+    @('diffusion_models', 'z_image_turbo-Q8_0.gguf',          "$HF/leejet/Z-Image-Turbo-GGUF/resolve/main/z_image_turbo-Q8_0.gguf"),
+    @('text_encoders',    'Qwen3-4B-Instruct-2507-Q4_K_M.gguf', "$HF/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf"),
+    @('vae',              'ae.safetensors',                   "$HF/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors")
 )
 
 function Log($m) { Add-Content -Path $Log -Value "$(Get-Date -Format 'HH:mm:ss') $m" }

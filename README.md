@@ -39,6 +39,8 @@ This repo is a **template**. It holds the code only. You bring your own models, 
 
 ## Setup (about an hour, mostly downloads)
 
+> An AI assistant can do this for you: point it at [AGENTS.md](AGENTS.md) section 16, a step-by-step runbook with a check after each step.
+
 Do these in order. Each step is one thing.
 
 ### 1. Desktop folders
@@ -96,7 +98,7 @@ Nothing in that folder belongs in git. `.gitignore` already blocks the usual sus
 | `desktop/web/` | The page: `index.html`, `app.css`, `app.js`. |
 | `desktop/tools/` | Setup and download scripts, Code sign-in gate. |
 | `desktop/config/` | Model settings + `*.example.json` templates. |
-| `scripts/` | Laptop-side: deploy, login change, mirror, backup. |
+| `scripts/` | Laptop-side: deploy, login change, mirror, backup, and `check-before-push.ps1` (run before every push). |
 | `tests/` | Smoke test + Playwright end-to-end tests (`LUMEN_URL` must be set). |
 | `LumenLauncher.pyw` | Laptop launcher (private app window). |
 | `laptop/code/opencode.json` | Example OpenCode client config pointing at your desktop's model. |

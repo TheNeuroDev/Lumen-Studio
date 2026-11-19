@@ -47,9 +47,7 @@ powershell -ExecutionPolicy Bypass -File C:\AI\tools\download-models.ps1
 ```
 Downloads Qwen-Image 2.1 (Standard / Realistic / Edit), Qwen-Image 2512, Real-ESRGAN x4plus and Wan 2.2 TI2V 5B with their encoders and VAEs. Progress: `C:\AI\logs\model-download.log`.
 
-Not covered by the script (get them from Hugging Face yourself if you want those profiles; file names must match `$Profiles` in `desktop\gateway.ps1`):
-- `turbo21` (the page's fast image mode): `diffusion_models\qwen-image-2.1-turbo-Q8_0.gguf`
-- `turbo` (sd-server's preloaded model, see `mode.ps1`): `diffusion_models\z_image_turbo-Q8_0.gguf`, `text_encoders\Qwen3-4B-Instruct-2507-Q4_K_M.gguf`, `vae\ae.safetensors`
+Total image-side download is about 60 GB. The script also fetches the fast mode (`turbo21`, Qwen-Image 2.1 Turbo) and Z-Image Turbo, which sd-server preloads when the image engine starts. If you skip Z-Image, change `$ImgArgs` in `desktop\mode.ps1` to preload a model you do have.
 
 **Use your own image models:** add or edit a profile in `$Profiles` in `desktop\gateway.ps1` (an sd-server recipe + component file paths relative to `C:\AI\image-models`).
 

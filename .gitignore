@@ -48,3 +48,4 @@ node_modules/
 __pycache__/
 .venv/
 *.lumen-upload
+.pii-patterns.local
