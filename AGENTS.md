@@ -12,9 +12,9 @@ Markers:
 
 This repo is a **public template**. It contains no personal values: every hostname, IP, username, path, password and model choice that is specific to one person is a placeholder (`YOUR-...`) or lives in a gitignored file.
 
-**If the user needs help with their own, personalized implementation** (their hostnames, hardware, paths, which models they run, their deploy setup, their notes), **reference the `Lumen` folder on the user's local machine.** Usually that's `C:\Lumen` on the desktop (with `C:\AI` as a junction to `C:\Lumen\Engine`), or a mirrored copy on their laptop. Ask the user where it is if you can't tell. Look there for:
+**If the user needs help with their own, personalized implementation** (their hostnames, hardware, paths, which models they run, their deploy setup, their notes), **reference the `Lumen` folder on the user's local machine.** Usually that's `C:\Lumen` on the PC that runs Lumen (with `C:\AI` as a junction to `C:\Lumen\Engine`); if they use a second machine, it may also be mirrored there. Ask the user where it is if you can't tell. Look there for:
 - `Engine\config\lumen.json`, `paths.json`, `chat-model.json`, `code-model.json`, `electricity.json` (their real settings)
-- `lumen.config.json` next to their copy of this repo (laptop settings)
+- `lumen.config.json` next to their copy of this repo (only exists if they use a second machine)
 - any notes, support guide or `AGENTS.md` of their own in that folder (these win over this file where they differ)
 - `Engine\logs\` for what actually happened
 
@@ -30,7 +30,7 @@ Rules for that folder:
 1. Be a **support assistant first**. Explain, diagnose, suggest. The user decides and runs things.
 2. **The fence.** In Lumen Code you may only read and write inside the current project folder. Don't try to get around it, and don't suggest loosening it.
 3. **Secrets.** Never ask for a password, token or key; never print, guess, store or send one. Never say a secret's value. Point to `docs/SECRETS.md` and let the user act.
-4. **No GUIs.** Don't run `start`, `explorer`, `Invoke-Item` or open browsers on the desktop. Nobody may be looking at its screen. Use Lumen's Artifacts / Preview tabs.
+4. **No GUIs.** Don't run `start`, `explorer`, `Invoke-Item` or open browsers or apps on the host PC unless the user asks. Use Lumen's Artifacts / Preview tabs instead.
 5. Shell commands always ask first. Keep them few and say why.
 6. For big or risky changes (gateway code, Windows/network changes, anything in section 13), say so and suggest a careful, reviewed change with a backup.
 7. For model or software recommendations, **search the web first**. Your training data is older than the user's setup.
@@ -49,26 +49,38 @@ The user's own preferences (in their `Lumen` folder or the conversation) overrid
 
 ## 3. What Lumen is
 
-A self-hosted AI studio. Prompts come from a laptop or phone; one **desktop PC ("Data Center")** does all compute and storage; results are viewed over a private **Tailscale** network (tailnet).
+A self-hosted, private AI studio that runs on the user's own PC, with whatever that PC's GPU can handle. No cloud, no accounts.
+
+**Standard setup = one PC.** That PC (the **host PC**) runs the gateway, the models and the page, and stores everything. The user opens the page in a browser on that same PC at `http://127.0.0.1:1240/`. Nothing else is required.
+
+**Bonus setups, all optional.** If the user has extra computing power or other devices, Lumen can use them:
+- **Remote access**: reach the host PC's page from a laptop or phone over a private Tailscale network.
+- **A dedicated "data center" PC**: a stronger always-on PC that does the heavy work, with a laptop or phone as the thin front end. This is how the original author runs it, but it is not what a normal install looks like.
+- **A second machine for development**: deploy changes and run backups over SSH.
 
 Modes (left rail; bottom tab bar on phones):
 - **Studio**: Image, Edit, Video (experimental placeholder), Voice, Music, plus an archive.
-- **Chat**: private chat with the local LLM (history on the desktop, Think toggle, image attach, "To Studio").
-- **Code**: OpenCode embedded in the page, one folder per project.
+- **Chat**: private chat with the local LLM (history on the host PC, Think toggle, image attach, "To Studio").
+- **Code**: OpenCode embedded in the page, one folder per project. **Limitation:** the page only embeds it over an HTTPS tailnet address (`https://<publicHost>:8443/`), not over plain `http://127.0.0.1`. A one-PC user who wants Code still needs Tailscale installed on that PC and opens the tailnet address in their own browser. Studio and Chat need no Tailscale.
 
-Page address: `https://<publicHost>/` (from `C:\AI\config\lumen.json`). **[UNKNOWN]** the user's actual name.
+Page address: `http://127.0.0.1:1240/` on the host PC. With remote access set up: `https://<publicHost>/` (from `C:\AI\config\lumen.json`). **[UNKNOWN]** the user's actual tailnet name.
 
 ## 4. Network
 
-- Tailscale is the only way in. Nothing is port-forwarded.
-- `tailscale serve` on the desktop:
+**Single PC (standard).** The gateway listens on `127.0.0.1:1240` and only answers that PC. No firewall changes, no port forwarding, nothing exposed.
+
+**Remote access (optional, bonus).** Tailscale is the only supported way in. Nothing is port-forwarded.
+- `tailscale serve` on the host PC:
   - `https://<publicHost>/` (443) → `127.0.0.1:1240` (gateway)
   - `https://<publicHost>:8443/` → `127.0.0.1:4097` (Code sign-in gate) → `127.0.0.1:4096` (OpenCode)
-- Laptop → desktop uses Windows OpenSSH (`C:\Windows\System32\OpenSSH\ssh.exe`); the remote shell is Windows PowerShell 5.1. The SSH target is in the user's `lumen.config.json` (`desktopSsh`). Don't ask for it or store it elsewhere.
 - VPN apps on a client must exclude Tailscale (`100.64.0.0/10`) via split tunneling, or traffic falls back to slow relays.
-- Breaking Tailscale or SSH on a remote desktop can lock everyone out until someone is physically there: anything touching Tailscale, SSH, firewall, network adapters, power/sleep or boot is **[STOP]**.
+- Never use `tailscale funnel` or port forwarding.
 
-## 5. Folder layout on the desktop
+**Second machine (optional, bonus).** To deploy or back up from another Windows PC, it uses OpenSSH (`C:\Windows\System32\OpenSSH\ssh.exe`) to the host PC (remote shell: Windows PowerShell 5.1). The SSH target is in that machine's `lumen.config.json` (`desktopSsh`). Don't ask for it or store it elsewhere.
+
+If the host PC is remote or unattended, breaking Tailscale or SSH can lock everyone out until someone is physically there: anything touching Tailscale, SSH, firewall, network adapters, power/sleep or boot is **[STOP]**. On a PC the user sits at, these are still **[STOP]** unless asked, but recovery is easy.
+
+## 5. Folder layout on the host PC
 
 | Path | What |
 |---|---|
@@ -153,15 +165,16 @@ The full list is in the header comment of `desktop\gateway.ps1`.
 ## 11. Cost tracker, launcher, deploy, tests
 
 - **Cost**: GPU measured by `nvidia-smi` every 2 s + CPU estimated from load + rest-of-PC watts, divided by PSU efficiency (`desktop\gw\energy.ps1`). Rate in `C:\AI\config\electricity.json` (set from the page). Ledger stores Wh, so a new rate re-prices history. Rough accuracy ±15-20%.
-- **Launcher** (`LumenLauncher.pyw`, laptop): connects Tailscale if off, opens `publicUrl/#launch` (from `lumen.config.json`) as a private app window in portable ungoogled-chromium (`app\engine\`, gitignored) or a Firefox fallback, wipes history/cache on close. No auto-update for the browser engine.
-- **Deploy** (laptop): `scripts\deploy.ps1` (`-WebOnly` for the page). Refuses `.ps1` that doesn't parse, backs up live files to `C:\AI\archive\deploy-<stamp>\`, copies over SSH, restarts the gateway task if gateway files changed. `config\*.json` are not deployed.
-- **After every deploy**: `tests\smoke.ps1` (read-only). Playwright tests in `tests\*.js` need `LUMEN_URL`.
+- **Updating on a single PC**: copy the repo's `desktop\*` over `C:\AI` (keep your own `config\*.json`), then restart the gateway (section 12). Page-only changes (`desktop\web\*`) need no restart.
+- **Second machine (optional)**: `scripts\deploy.ps1` does the same over SSH (`-WebOnly` for the page). It refuses `.ps1` that doesn't parse, backs up live files to `C:\AI\archive\deploy-<stamp>\`, copies, and restarts the gateway task if gateway files changed. `config\*.json` are not deployed. It reads `lumen.config.json`.
+- **Launcher (optional)**: `LumenLauncher.pyw` opens `publicUrl/#launch` (from `lumen.config.json`) as a private app window in portable ungoogled-chromium (`app\engine\`, gitignored) or a Firefox fallback, wipes history/cache on close, and connects Tailscale if it's off. Only useful with remote access.
+- **After every update**: `tests\smoke.ps1 -Base http://127.0.0.1:1240` on a single PC (or no argument if `lumen.config.json` has `publicUrl`). Read-only. Playwright tests in `tests\*.js` need `LUMEN_URL`.
 - **PowerShell 5.1 gotchas** (gateway): return byte arrays as `, $bytes`; cast cmdlet results to plain types (`[bool](Test-Path ...)`) before `$Json.Serialize`; never read `$Switch` inside a `switch` block (use `$script:Switch`); processes started inside SSH die when it closes (use `Start-Detached` in `mode.ps1`).
 - A broken `gateway.ps1` takes the whole site down. Test parsing before deploying.
 
 ## 12. Troubleshooting
 
-Read-only checks to give the user (PowerShell on the desktop):
+Read-only checks to give the user (PowerShell on the host PC):
 
 ```powershell
 Get-ScheduledTask 'Lumen Gateway' | Select-Object TaskName, State
@@ -177,7 +190,7 @@ Get-Content C:\AI\logs\gateway.log -Tail 40
 
 | Symptom | Likely cause | Check / do |
 |---|---|---|
-| Page won't load | Client's Tailscale off, VPN in the way, desktop offline, gateway down | Tailscale on; VPN split tunnel; `tailscale status`; then the checks above. Restart the gateway (below) only with OK. |
+| Page won't load | Gateway down; or (remote access) the client's Tailscale is off, a VPN is in the way, or the host PC is offline | Single PC: the checks above, then `http://127.0.0.1:1240/`. Remote: Tailscale on, VPN split tunnel, `tailscale status`. Restart the gateway (below) only with OK. |
 | Broke right after a deploy | Bad deploy | Roll back from the newest `C:\AI\archive\deploy-*` (below). |
 | Page unstyled | Extension rewriting CSS, stale cache | Clean app window, hard refresh. |
 | Stuck loading a mode | Engine slow/failed, VRAM held | `/gw/status` → `switching`; tail the engine log; `nvidia-smi`. `mode.ps1 stop`, then pick the mode again. |
@@ -210,7 +223,7 @@ Copy-Item "$($b.FullName)\*.ps1" C:\AI\ -Force; Copy-Item "$($b.FullName)\web\*"
 - `C:\Lumen\` and everything in it, and the `C:\AI` junction.
 - `C:\AI\secrets\`, SSH folders, `C:\AI\code-home`, the OpenCode config folder.
 - Tailscale and its `serve` config; OpenSSH Server; the "Lumen Gateway" task.
-- Power settings that keep a remote desktop awake (sleep/hibernate off).
+- Power settings that keep an unattended host PC awake (sleep/hibernate off).
 - GPU drivers, CUDA DLLs, the Python venvs for voice/music (absolute paths baked in).
 - Model files (ACE-Step's unused-looking 1.7B LM included) and the newest deploy backups.
 - Never move Lumen into OneDrive or any synced cloud folder.
@@ -223,35 +236,36 @@ Copy-Item "$($b.FullName)\*.ps1" C:\AI\ -Force; Copy-Item "$($b.FullName)\web\*"
 
 ## 15. Glossary
 
-- **Data Center**: the desktop PC that runs Lumen.
+- **Host PC**: the PC that runs Lumen (the gateway, models and files). Also called the "data center" when it's a dedicated machine.
 - **Engine**: `C:\Lumen\Engine` (= `C:\AI`), or one GPU program (image, voice, music, llm).
 - **Gateway**: `gateway.ps1`, the web server that serves the page and controls the engines.
 - **Mode**: which engine holds the GPU.
 - **Profile**: which image model sd-server has loaded (`turbo21`, `real`, `video`, ...).
 - **Fence**: Lumen Code's rule that a session only touches its own project folder.
 - **Gate**: the sign-in proxy in front of OpenCode.
-- **Tailnet**: the user's private Tailscale network.
-- **publicHost**: the desktop's tailnet name, set in `C:\AI\config\lumen.json`.
+- **Tailnet**: the user's private Tailscale network (optional bonus).
+- **publicHost**: the host PC's tailnet name, set in `C:\AI\config\lumen.json`. Only needed for remote access.
 
-## 16. Fresh install runbook (desktop, Windows)
+## 16. Fresh install runbook (Windows)
 
-Status: written from the real setup and checked against its file layout, but **not yet run on a clean machine**. If a step fails, trust the machine, say what you saw, and fix this section afterwards (section 17).
-Do the steps in order. Each ends with a **Check**: don't move on until it passes. Anything that needs admin rights or changes the network is **[STOP]** until the user says go.
+**Standard install = one Windows PC with an NVIDIA GPU, running everything locally.** Steps marked *(bonus)* are optional extras for remote access or a second machine: skip them unless the user wants them.
+Status: written from a real working setup and checked against its file layout, but **not yet run on a clean machine**. If a step fails, trust the machine, say what you saw, and fix this section afterwards (section 17).
+Do the steps in order. Each ends with a **Check**: don't move on until it passes. Anything needing admin rights or network changes is **[STOP]** until the user says go.
 
 ### Step 0. Ask the user first
-1. Windows 10/11 on the desktop? (Linux, macOS and AMD GPUs are not supported: the scripts are Windows PowerShell 5.1 and the engines are CUDA builds.)
-2. NVIDIA GPU model and VRAM (`nvidia-smi`), RAM, free disk (need ~150 GB: models alone ~90 GB).
-3. Do they use Tailscale already? What is the desktop's tailnet name (`<name>.<tailnet>.ts.net`)? Are MagicDNS and HTTPS certificates enabled in the Tailscale admin console? (Both are required for `tailscale serve`.)
-4. Which Windows user will run Lumen? (It runs the gateway task and owns `C:\AI\secrets`.)
-5. Do they also want a laptop front end, voice and music, and the Code workspace? (All optional.)
-6. Do they keep personal notes in a local `Lumen` folder? Read it for anything the user already decided (section 0).
+1. Windows 10/11? (Linux, macOS and AMD GPUs are not supported: the scripts are Windows PowerShell 5.1 and the engines are CUDA builds.)
+2. NVIDIA GPU model and VRAM (`nvidia-smi`), RAM, free disk (need ~150 GB: models alone ~90 GB). Lumen runs whatever this machine can: weaker hardware means smaller models and slower results.
+3. Do they want only this PC (standard), or also remote access from a laptop/phone *(bonus)*, or a second machine to deploy from *(bonus)*? If remote access: do they use Tailscale, and are MagicDNS and HTTPS certificates enabled in its admin console?
+4. Which Windows user will run Lumen? (It owns `C:\AI\secrets`.)
+5. Do they want voice, music and the Code workspace? (All optional. Code needs Tailscale, see section 3.)
+6. Do they keep personal notes in a local `Lumen` folder? Read it for anything already decided (section 0).
 
-### Step 1. Prerequisites (desktop)
-- **Tailscale**: install, sign in, then in the admin console turn on **MagicDNS** and **HTTPS Certificates**. Check: `tailscale status` lists the desktop.
+### Step 1. Prerequisites
 - **NVIDIA driver** with CUDA 12 support. Check: `nvidia-smi` prints the GPU.
-- **OpenSSH Server** (only if you'll deploy from a laptop). Admin PowerShell: `Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0; Set-Service sshd -StartupType Automatic; Start-Service sshd`. Put the laptop's public key in `C:\Users\<user>\.ssh\authorized_keys` (for admin accounts: `C:\ProgramData\ssh\administrators_authorized_keys`). Check: from the laptop, `ssh -o BatchMode=yes <user>@<desktop> hostname` works.
-- **Power**: Balanced plan with sleep and hibernate off, or the desktop goes away when nobody is there.
-- `curl.exe` is built into Windows 10+. Nothing else is needed on the desktop (no Python, Node or git): Lumen's scripts download what they need.
+- `curl.exe` is built into Windows 10+. Nothing else is needed (no Python, Node or git): Lumen's scripts download what they need.
+- *(bonus, remote access)* **Tailscale**: install, sign in, turn on **MagicDNS** and **HTTPS Certificates** in the admin console. Check: `tailscale status` lists this PC.
+- *(bonus, second machine)* **OpenSSH Server**. Admin PowerShell: `Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0; Set-Service sshd -StartupType Automatic; Start-Service sshd`. Put the other machine's public key in `C:\Users\<user>\.ssh\authorized_keys` (admin accounts: `C:\ProgramData\ssh\administrators_authorized_keys`). Check: from that machine, `ssh -o BatchMode=yes <user>@<host-pc> hostname` works.
+- *(bonus, unattended PC)* **Power**: Balanced plan with sleep and hibernate off.
 
 ### Step 2. Folders and files
 ```powershell
@@ -261,8 +275,8 @@ cmd /c mklink /J C:\AI C:\Lumen\Engine
 Copy this repo's `desktop\*` into `C:\AI` (so `C:\AI\gateway.ps1`, `C:\AI\mode.ps1`, `C:\AI\llm-config.ps1`, `C:\AI\gw\`, `C:\AI\web\`, `C:\AI\tools\`, `C:\AI\audio\`, `C:\AI\config\` exist), then `New-Item -ItemType Directory -Force C:\AI\logs, C:\AI\secrets, C:\AI\models, C:\AI\image-models`.
 Check: `Test-Path C:\AI\gateway.ps1` is True and `(Get-Item C:\AI).LinkType` is `Junction`.
 
-### Step 3. Your settings
-Copy `C:\AI\config\lumen.example.json` to `C:\AI\config\lumen.json` and set `publicHost` to the desktop's full tailnet name (no `https://`). Optional: `paths.example.json` to `paths.json` to move Studio/Chats/Code. Check: both files parse (`Get-Content ... | ConvertFrom-Json`).
+### Step 3. Your settings (only for remote access)
+On a single PC, skip this: the gateway works without `lumen.json`. For remote access, copy `C:\AI\config\lumen.example.json` to `C:\AI\config\lumen.json` and set `publicHost` to the PC's full tailnet name (no `https://`). Optional anywhere: `paths.example.json` to `paths.json` to move Studio/Chats/Code. Check: the files parse (`Get-Content ... | ConvertFrom-Json`).
 
 ### Step 4. Engines (not in this repo)
 Download release builds, unzip, and copy **all** files from the zip into the folder (the exe needs its DLLs next to it):
@@ -272,21 +286,23 @@ Download release builds, unzip, and copy **all** files from the zip into the fol
 | stable-diffusion.cpp, Windows x64 **CUDA 12** build | github.com/leejet/stable-diffusion.cpp/releases | `C:\AI\sd\` | `sd-server.exe` |
 Pick the newest release whose asset names say `win`, `x64` and `cuda12`/`cu12`. If the sd.cpp release has no `sd-server.exe`, say so and ask the user (it may need a newer release or a build). Check: `& C:\AI\llama.cpp\llama-server.exe --version` and `& C:\AI\sd\sd-server.exe --help` both print without a missing-DLL error.
 
-### Step 5. Models (about 90 GB, an hour or more)
+### Step 5. Models (about 90 GB with the defaults, an hour or more)
 Run, one at a time, and wait for each: `C:\AI\tools\download-chat-model.ps1`, then `C:\AI\tools\download-models.ps1` (commands and sizes in `docs/INSTALL-MODELS.md`). They resume if interrupted.
-**Adapt to the GPU** (edit `C:\AI\config\chat-model.json` and `code-model.json`, see section 7):
+**Match the models to the machine** (edit `C:\AI\config\chat-model.json` and `code-model.json`, see section 7):
 | VRAM | Suggestion |
 |---|---|
 | 24 GB+ | `cpu_moe` 0, larger `ctx` |
 | 12 GB (the tested setup) | defaults: `ctx` 131072, `cpu_moe` 24, `kv_type` q8_0 |
 | 8 GB | `ctx` 32768, `cpu_moe` 40+, or a smaller GGUF; image Standard/Realistic will be slow. **[UNKNOWN]** not tested |
-| under 8 GB | use a small dense GGUF for chat and skip big image models. **[UNKNOWN]** not tested |
+| under 8 GB | use a small dense GGUF for chat and skip the big image models. **[UNKNOWN]** not tested |
 Remove `extra_args` (MTP) if the chosen model has no MTP head. Check: every file has a `.done` marker next to it (`Get-ChildItem C:\AI\models, C:\AI\image-models -Recurse -Filter *.done`).
 
 ### Step 6. Voice and music (optional)
 `C:\AI\tools\setup-audio.ps1`, then `install-ffmpeg.ps1`, then `prefetch-music-models.ps1`. Check: `C:\AI\audio\voice\.venv\Scripts\python.exe` and `C:\AI\audio\ace-step\.venv` exist. Skip this and the page's Voice/Music tabs will report "not installed".
 
-### Step 7. Start the gateway at boot (admin PowerShell, **[STOP]** until the user agrees)
+### Step 7. Start the gateway
+Quick test first (works anywhere, stops when the window closes): `powershell -NoProfile -ExecutionPolicy Bypass -File C:\AI\gateway.ps1`.
+To start it automatically at boot (admin PowerShell, **[STOP]** until the user agrees):
 ```powershell
 $a = New-ScheduledTaskAction -Execute powershell.exe -Argument '-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File C:\AI\gateway.ps1'
 $p = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType S4U -RunLevel Highest
@@ -295,33 +311,34 @@ Register-ScheduledTask 'Lumen Gateway' -Action $a -Trigger (New-ScheduledTaskTri
 Start-ScheduledTask 'Lumen Gateway'
 ```
 (Action, user mode and run level match the original setup; the restart/battery settings are the same ones this repo's other tasks use.)
-Check: `Get-NetTCPConnection -LocalPort 1240 -State Listen` returns a row, and `Invoke-RestMethod http://127.0.0.1:1240/gw/status` returns JSON. If not, read `C:\AI\logs\gateway.log`.
+Check: `Get-NetTCPConnection -LocalPort 1240 -State Listen` returns a row, `Invoke-RestMethod http://127.0.0.1:1240/gw/status` returns JSON, and **`http://127.0.0.1:1240/` opens Lumen in a browser on this PC**. If not, read `C:\AI\logs\gateway.log`. For a single-PC user, the core install is now done.
 
-### Step 8. Publish to the tailnet
+### Step 8. Remote access *(bonus)*
 ```powershell
 & 'C:\Program Files\Tailscale\tailscale.exe' serve --bg --https=443 http://127.0.0.1:1240
 ```
 Check: `tailscale serve status` lists `https://<publicHost>` proxying `127.0.0.1:1240`, and `https://<publicHost>/` opens the page from **another** device on the tailnet. Never use `tailscale funnel`.
 
-### Step 9. Code workspace (optional)
-As the gateway's Windows user: `powershell -ExecutionPolicy Bypass -File C:\AI\tools\setup-code.ps1`. It installs OpenCode, writes `C:\AI\secrets\opencode-password.txt`, and publishes port 8443. Do **not** read the password for the user: tell them to open that file themselves, or set their own with `scripts\set-opencode-login.ps1` (docs/SECRETS.md).
-Check: in the page choose Code; `mode.ps1 code` prints `ok`; `Get-NetTCPConnection -LocalPort 4096,4097 -State Listen` shows both; signing in works.
+### Step 9. Code workspace (optional; needs Tailscale, see section 3)
+As the gateway's Windows user: `powershell -ExecutionPolicy Bypass -File C:\AI\tools\setup-code.ps1`. It installs OpenCode, writes `C:\AI\secrets\opencode-password.txt`, and publishes port 8443 (so Tailscale must be installed first). Do **not** read the password for the user: tell them to open that file themselves, or set their own with `scripts\set-opencode-login.ps1` (docs/SECRETS.md; that script needs the second-machine SSH setup, or run its steps by hand on the PC).
+Check: open the tailnet address, choose Code; `mode.ps1 code` prints `ok`; `Get-NetTCPConnection -LocalPort 4096,4097 -State Listen` shows both; signing in works.
 
-### Step 10. Laptop front end (optional)
-1. Copy `lumen.config.example.json` to `lumen.config.json` and fill in `publicUrl`, `desktopSsh` (`user@desktop-ip-or-name`), `laptopRoot`.
-2. `scripts\deploy.ps1` pushes later changes. It uses the SSH setup from step 1.
+### Step 10. A second machine *(bonus)*
+Only for users who deploy or back up from another Windows PC.
+1. Copy `lumen.config.example.json` to `lumen.config.json` and fill in `publicUrl`, `desktopSsh` (`user@host-pc-ip-or-name`), `laptopRoot`.
+2. `scripts\deploy.ps1` pushes later changes (SSH from step 1).
 3. `tests\smoke.ps1` is the post-deploy check. Playwright tests need `LUMEN_URL`.
-4. `LumenLauncher.pyw` (run with pythonw) opens the page as an app window. Put a portable ungoogled-chromium in `app\engine\` for a private window, else it uses Firefox.
+4. `LumenLauncher.pyw` (run with pythonw) opens the page as an app window; put a portable ungoogled-chromium in `app\engine\` for a private window, else it uses Firefox.
 
-### Step 11. Final verification (all must pass)
+### Step 11. Final verification
 | Test | Expected |
 |---|---|
-| `tests\smoke.ps1` | 7 lines starting `ok` |
-| Page opens from a phone on the tailnet | Lumen loads, dark theme, no Google requests |
+| `tests\smoke.ps1 -Base http://127.0.0.1:1240` | 7 lines starting `ok` |
 | Chat: send "hello" | Reply streams (first load ~1 min) |
 | Studio > Image fast > a short prompt | Image appears, saved under `C:\Lumen\Studio\<yyyy-MM>\` |
-| Code (if installed) | Sign in, create a project, the model answers |
-| Reboot the desktop, don't log in | The page still loads (gateway + Tailscale + SSH start at boot) |
+| Reboot (if the boot task was created) and don't sign in | `http://127.0.0.1:1240/` still loads |
+| *(bonus)* page opens from a phone on the tailnet | Lumen loads, dark theme, no Google requests |
+| *(optional)* Code | Sign in, create a project, the model answers |
 
 ### Known sharp edges for installers
 - Hard-coded `C:\AI` paths: keep the junction, don't relocate Engine.
