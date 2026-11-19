@@ -55,14 +55,8 @@ Download the release builds into these folders:
 - stable-diffusion.cpp (CUDA build) → `C:\AI\sd\` (needs `sd-server.exe`)
 
 ### 3. Models
-See **[docs/INSTALL-MODELS.md](docs/INSTALL-MODELS.md)**. Short version:
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\AI\tools\download-chat-model.ps1
-powershell -ExecutionPolicy Bypass -File C:\AI\tools\download-models.ps1
-powershell -ExecutionPolicy Bypass -File C:\AI\tools\setup-audio.ps1      # voice + music (optional)
-powershell -ExecutionPolicy Bypass -File C:\AI\tools\install-ffmpeg.ps1   # music MP3s (optional)
-```
-Want a different model? Point `C:\AI\config\chat-model.json` / `code-model.json` at any GGUF.
+Lumen ships no models and recommends none. Pick the ones that suit your hardware: see **[docs/INSTALL-MODELS.md](docs/INSTALL-MODELS.md)** (how to research, filter and wire them in). Then point `C:\AI\config\chat-model.json` / `code-model.json` at your chosen GGUF (copy the `*.example.json` files).
+Optional: `C:\AI\tools\setup-audio.ps1` and `install-ffmpeg.ps1` install the voice and music engines. The `download-*.ps1` scripts are examples of how to script a download, not a model list to follow.
 
 ### 4. Secrets and logins
 See **[docs/SECRETS.md](docs/SECRETS.md)**. Secrets live in `C:\AI\secrets\` on the desktop. They are never in this repo.
@@ -113,4 +107,4 @@ Nothing in that folder belongs in git. `.gitignore` already blocks the usual sus
 
 ## Models and licenses
 
-The default models are open-weight and chosen to be unrestricted. Each one has its own license (some are non-commercial, for example Qwen-Image 2.1). Check each model's license before you use its output commercially.
+You choose the models; this repo ships none. Each model has its own license (some are non-commercial or research-only). Check it before you use a model's output commercially.

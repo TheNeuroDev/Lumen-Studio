@@ -1,3 +1,5 @@
+# EXAMPLE SCRIPT: this downloads the models the original author chose for one 12 GB GPU. It is NOT a recommendation.
+# Research current models for your own hardware first (docs/INSTALL-MODELS.md), then copy this file and edit the list.
 # Downloads the Lumen Studio model files into C:\AI\image-models (sd-server's --model-dir layout).
 # Re-runnable: finished files are skipped, partial files resume. Progress: C:\AI\logs\model-download.log
 #   powershell -ExecutionPolicy Bypass -File C:\AI\tools\download-models.ps1

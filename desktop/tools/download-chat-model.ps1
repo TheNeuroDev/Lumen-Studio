@@ -1,3 +1,5 @@
+# EXAMPLE SCRIPT: this downloads the models the original author chose for one 12 GB GPU. It is NOT a recommendation.
+# Research current models for your own hardware first (docs/INSTALL-MODELS.md), then copy this file and edit the list.
 # Downloads the uncensored chat/code model into C:\AI\models: Qwen3.6-35B-A3B "uncensored Heretic"
 # (llmfan46, Native-MTP-Preserved, Q4_K_M 21.8 GB) + its vision projector (0.9 GB).
 # Re-runnable: finished files are skipped, partial files resume. mode.ps1 switches to it once both

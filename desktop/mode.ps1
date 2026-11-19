@@ -1,11 +1,11 @@
 ﻿# C:\AI\mode.ps1 - switch the desktop's GPU between its engines (one at a time).
 # Usage: powershell -NoProfile -ExecutionPolicy Bypass -File C:\AI\mode.ps1 llm|code|image|voice|music|stop|gate
 # Prints one line starting with "ok" or "error". Exit code 0 = ok.
-#   llm    llama-server (Qwen3.6-35B-A3B, uncensored Heretic build when downloaded)  127.0.0.1:8099   (Chat + laptop tunnel)
+#   llm    llama-server with the model named in chat-model.json                      127.0.0.1:8099   (Chat)
 #   code   llm + OpenCode web workspace (thread folders: paths.json 'code')                        127.0.0.1:4096
-#   image  sd-server (Z-Image Turbo preloaded; Lumen loads Qwen-Image / Edit / Wan video on demand) 127.0.0.1:1234
-#   voice  Chatterbox-Turbo voice server             127.0.0.1:8002
-#   music  ACE-Step 1.5 REST API                     127.0.0.1:8001
+#   image  sd-server (preloads the model in $ImgArgs; Lumen loads other profiles on demand)       127.0.0.1:1234
+#   voice  voice server (desktop\audio\voice_server.py)  127.0.0.1:8002
+#   music  music engine REST API (setup-audio.ps1)      127.0.0.1:8001
 param([Parameter(Mandatory = $true)][ValidateSet('llm', 'code', 'image', 'voice', 'music', 'stop', 'gate')][string]$Mode)
 
 $ErrorActionPreference = 'Stop'
@@ -13,10 +13,8 @@ $ProgressPreference = 'SilentlyContinue'
 $root = 'C:\AI'
 $logs = "$root\logs"
 
-# Chat and Code models: C:\AI\config\chat-model.json / code-model.json (see llm-config.ps1). Default: the
-# uncensored Heretic build (llmfan46, refusals 10/100 vs 83/100, KL 0.0015) once its download has finished
-# (.done marker from tools\download-chat-model.ps1), the stock build until then; 128K context (Qwen recommends
-# >= 128K so thinking isn't cut off), q8_0 KV cache (~1.5 GB), 24 MoE expert layers on the CPU.
+# Chat and Code models: C:\AI\config\chat-model.json / code-model.json (see llm-config.ps1 and docs/INSTALL-MODELS.md).
+# You choose the model (gguf), context size, KV-cache type and how many MoE expert layers stay on the CPU.
 # Model ids: Chat asks for "lumen-chat", OpenCode for "lumen-code".
 . "$root\llm-config.ps1"
 $LlmPort  = 8099   # not 8080: other vendors' services often take that one
@@ -32,7 +30,8 @@ $OcConfig = Join-Path $env:USERPROFILE '.config\opencode\opencode.json'
 $ImgExe   = "$root\sd\sd-server.exe"
 $ImgPort  = 1234
 $ImgDir   = "$root\image-models"
-# Z-Image-Turbo preloaded (fast default). --model-dir lets the Lumen gateway load other recipes at runtime;
+# EDIT FOR YOUR MODELS: the image model sd-server preloads at start (the author's choice; use files you have, see
+# docs/INSTALL-MODELS.md). --model-dir lets the Lumen gateway load other recipes at runtime;
 # --hires-upscalers-dir provides the ESRGAN upscaler for /sdcpp/v1/upscale.
 $ImgArgs  = "--model-dir `"$ImgDir`" --hires-upscalers-dir `"$ImgDir\upscale_models`" " +
             "--diffusion-model `"$ImgDir\diffusion_models\z_image_turbo-Q8_0.gguf`" " +
@@ -129,6 +128,7 @@ function Ensure($name, $port, [scriptblock]$check, [scriptblock]$start) {
 function Start-Llm($role) {
     $cfg = Get-LlmCfg $role; $sig = Get-LlmSig $cfg
     if (-not (Test-Path -LiteralPath $cfg.server)) { Fail "llama-server not found at $($cfg.server)" }
+    if (-not $cfg.gguf) { Fail "no model configured: copy desktop\config\$role-model.example.json to C:\AI\config\$role-model.json and set gguf (docs/INSTALL-MODELS.md)" }
     if (-not (Test-Path -LiteralPath $cfg.gguf)) { Fail "model file missing: $($cfg.gguf)" }
     $st = Get-LlmState
     if ($st -and $st['sig'] -eq $sig -and (Test-Listening $LlmPort)) { Set-LlmRole $role; return 'already-running' }

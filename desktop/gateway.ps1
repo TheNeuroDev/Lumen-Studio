@@ -1,5 +1,5 @@
 ﻿# C:\AI\gateway.ps1 - always-on front door for Lumen Studio (images, edits, upscales, video, voice, music).
-# Video (Wan 2.2 5B) is an experimental placeholder: the user knows it's rough and kept it for fun (2026-11-15).
+# Video is an experimental placeholder.
 #
 # Listens on port 1240 and only answers requests from this PC (tailscale serve and the laptop's
 # SSH tunnel both arrive from 127.0.0.1). It:
@@ -60,6 +60,8 @@ $CodeRoot = $LumenPaths.code
 $UploadMax = 2GB   # per file, /gw/code/upload
 
 # Image-engine model profiles: sd-server recipe + component files (relative to C:\AI\image-models).
+# EDIT FOR YOUR MODELS: these entries are the author's own wiring, and the page (app.js IMG_MODELS, PROFILE_LABEL, step counts) is
+# written around them. Add or replace profiles to match the models you chose (docs/INSTALL-MODELS.md).
 $Profiles = [ordered]@{
     turbo   = @{ label = 'Z-Image Turbo'; recipe = 'z-image-turbo'; models = [ordered]@{
                 diffusion_model = 'diffusion_models/z_image_turbo-Q8_0.gguf'

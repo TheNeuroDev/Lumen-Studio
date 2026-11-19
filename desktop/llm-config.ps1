@@ -1,7 +1,7 @@
 # C:\AI\llm-config.ps1 - which model llama-server runs for Chat and for Code. Dot-sourced by mode.ps1 and gateway.ps1.
 #
-# C:\AI\config\chat-model.json and C:\AI\config\code-model.json (every field optional; a missing file or field
-# means today's default, the uncensored Qwen3.6 35B Heretic build):
+# C:\AI\config\chat-model.json and C:\AI\config\code-model.json (copy desktop\config\*-model.example.json; only
+# 'gguf' is required: Lumen ships no model and prefers none. Missing fields fall back to neutral values below):
 #   name        label shown in Lumen and OpenCode
 #   gguf        model file;  mmproj  vision projector ("" = none; defaults to none when gguf is set)
 #   ctx         context tokens;  cpu_moe  MoE expert layers kept on the CPU;  kv_type  KV-cache type (q8_0, f16, ...)
@@ -16,15 +16,14 @@ $LlmStateFile = 'C:\AI\logs\llm-state.json'   # {sig, aliases, role, pid, oc} of
 $LlmSer = New-Object System.Web.Script.Serialization.JavaScriptSerializer
 $LlmSer.MaxJsonLength = [int]::MaxValue
 
+# Fallback values for fields your config leaves out. gguf is empty on purpose: you choose the model
+# (docs/INSTALL-MODELS.md). mode.ps1 stops with a clear message until chat-model.json / code-model.json names one.
 function Get-LlmDefault {
-    $h = "$LlmModels\Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-Q4_K_M.gguf"
-    $hm = "$LlmModels\Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-mmproj-BF16.gguf"
-    $useH = Test-Path "$h.done"
     return [ordered]@{
-        name = $(if ($useH) { 'Qwen3.6 35B uncensored' } else { 'Qwen3.6 35B' })
-        gguf = $(if ($useH) { $h } else { "$LlmModels\Qwen3.6-35B-A3B-UD-Q4_K_M.gguf" })
-        mmproj = $(if ($useH -and (Test-Path "$hm.done")) { $hm } else { '' })
-        ctx = 131072; cpu_moe = 24; kv_type = 'q8_0'; extra_args = ''; server = 'C:\AI\llama.cpp\llama-server.exe'
+        name = 'Local model'
+        gguf = ''
+        mmproj = ''
+        ctx = 32768; cpu_moe = 0; kv_type = 'q8_0'; extra_args = ''; server = 'C:\AI\llama.cpp\llama-server.exe'
     }
 }
 function Read-LlmFile($role) {

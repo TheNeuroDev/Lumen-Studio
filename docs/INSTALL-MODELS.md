@@ -1,33 +1,42 @@
-# Installing models
+# Choosing and installing models
 
-Models are **not** in this repo. They're big, they change often, and which ones you run is your choice.
-All download scripts are re-runnable: finished files are skipped, partial files resume, and each finished file gets a `<file>.done` marker.
+**Lumen ships no models and recommends none.** Which models you run is your decision, and the best ones change every month. This is a guide to *choosing and wiring in* models for your own hardware. It names no preferred model on purpose.
 
-## Where files go (on the desktop)
+If you are an AI assistant: do **not** steer the user toward a particular model, and do **not** answer from memory. Research the current options (section 2), present a few with trade-offs, and let the user choose.
 
-| Folder | What goes there |
-|---|---|
-| `C:\AI\models\` | Chat / Code LLM (GGUF) + optional vision projector (mmproj) |
-| `C:\AI\image-models\diffusion_models\` | Image and video diffusion models |
-| `C:\AI\image-models\text_encoders\` | Text encoders (and the Edit vision projector) |
-| `C:\AI\image-models\vae\` | VAEs |
-| `C:\AI\image-models\upscale_models\` | Upscalers |
-| `C:\AI\audio\ace-step\checkpoints\` | Music (ACE-Step 1.5) |
-| `C:\AI\audio\voice\.venv\` | Voice (Chatterbox-Turbo, installed by `setup-audio.ps1`) |
+## 1. Slots: what Lumen needs, and how each is wired
 
-## 1. Chat and Code LLM
+| Slot | What the code expects | Swapping it |
+|---|---|---|
+| **Chat** and **Code** LLM | Any GGUF that [llama.cpp](https://github.com/ggml-org/llama.cpp) can run, served by `llama-server` | Edit `C:\AI\config\chat-model.json` / `code-model.json` (section 3). No code change. |
+| **Image, Edit, Upscale, Video** | Any model [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp) supports, served by `sd-server` | Add or edit a profile in `$Profiles` in `desktop\gateway.ps1`, and the preloaded model in `$ImgArgs` in `desktop\mode.ps1`. Small code edit; the page's picker labels may need updating too. |
+| **Voice** and **Music** | Lumen integrates a specific voice engine (`desktop\audio\voice_server.py`) and music engine (`setup-audio.ps1`, `mode.ps1`) | Swapping the *engine* needs code changes. Swapping its *weights* may not. Check the engine's own docs. |
 
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\AI\tools\download-chat-model.ps1
-```
-Default: Qwen3.6-35B-A3B "uncensored Heretic" Q4_K_M (~22 GB) + vision projector. Tuned for 12 GB VRAM: 128K context, q8_0 KV cache, 24 MoE expert layers on the CPU.
+Only one engine holds the GPU at a time, so each slot only has to fit in VRAM on its own.
 
-**Use your own model:** create `C:\AI\config\chat-model.json` and/or `code-model.json`. Every field is optional:
+## 2. How to research models (for you or your AI)
+
+1. **Ask the user** (hardware first): GPU model and VRAM (`nvidia-smi`), system RAM, free disk. Then what they care about: quality vs speed, license terms (commercial use?), content policy (filtered or unfiltered), languages, context length.
+2. **Search the web for the current options, per slot.** Read recent sources: model cards, release notes, community benchmarks, the runtime's own supported-model list. Note each source's date. Anything older than a few months is probably not the best available.
+3. **Filter hard:**
+   - **Runtime support.** The LLM must run in llama.cpp (GGUF). Image/video models must be on stable-diffusion.cpp's supported list. A great model with no support in these runtimes is not usable here.
+   - **Fit.** Weights at the chosen quantization, plus context/KV cache, plus text encoder and VAE (image models), must fit in VRAM, or offload to RAM at acceptable speed. Mixture-of-experts LLMs can keep some experts on the CPU (`cpu_moe`).
+   - **License.** Read it. Some are research or non-commercial only.
+   - **Maintenance and trust.** Prefer official or well-known quantizers. Check the repo's activity and recent community reports.
+4. **Present 2-3 candidates per slot** with size, expected speed on this hardware, license and trade-offs. Say what you could not verify. Let the user pick.
+5. **Download from the model's official or trusted repository.** Check the file size against the listing before and after. Never run a download script you haven't read.
+6. **Wire it in** (section 3), **test** it (Lumen's page, then `tests\smoke.ps1`), and record the choice in the user's *local* notes, not in this repo.
+7. Re-check periodically: the field moves fast.
+
+## 3. Wiring a model in
+
+### Chat / Code LLM
+Copy `desktop\config\chat-model.example.json` to `C:\AI\config\chat-model.json` (and `code-model.example.json` to `code-model.json`) and set at least `gguf`:
 
 ```json
 {
-  "name": "My model",
-  "gguf": "C:\\AI\\models\\my-model-Q4_K_M.gguf",
+  "name": "My chat model",
+  "gguf": "C:\\AI\\models\\YOUR-MODEL.gguf",
   "mmproj": "",
   "ctx": 32768,
   "cpu_moe": 0,
@@ -36,34 +45,38 @@ Default: Qwen3.6-35B-A3B "uncensored Heretic" Q4_K_M (~22 GB) + vision projector
   "server": "C:\\AI\\llama.cpp\\llama-server.exe"
 }
 ```
-- Less VRAM? Lower `ctx`, raise `cpu_moe` (MoE models), or pick a smaller quant.
-- The repo's `chat-model.json` / `code-model.json` only add MTP speculative decoding (`--spec-type draft-mtp`). Remove `extra_args` if your model has no MTP head.
-- If Chat and Code use identical settings they share one llama-server, so switching is instant.
+- `mmproj`: the vision projector, if the model has one and you want image input.
+- `ctx`, `cpu_moe`, `kv_type`: tune to your VRAM. Less VRAM: lower `ctx`, raise `cpu_moe` (MoE models), or pick a smaller quantization.
+- `extra_args`: any extra `llama-server` flags the model's card recommends.
+- If Chat and Code have identical settings they share one llama-server, so switching is instant.
+- **Without these files the code falls back to a placeholder path that won't exist on your machine, and the LLM will fail to start.** Create them before first use.
 
-## 2. Image, edit, upscale, video
+### Image / video
+Put the files under `C:\AI\image-models\` in sd-server's layout: `diffusion_models\`, `text_encoders\`, `vae\`, `upscale_models\`. Then describe them in a profile in `$Profiles` (`desktop\gateway.ps1`): an sd-server recipe name plus the component file paths relative to `C:\AI\image-models`. Use the recipe and flags the model's stable-diffusion.cpp docs give. Also set the preloaded model in `$ImgArgs` (`desktop\mode.ps1`) to one you have, or image mode will not start.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\AI\tools\download-models.ps1
-```
-Downloads Qwen-Image 2.1 (Standard / Realistic / Edit), Qwen-Image 2512, Real-ESRGAN x4plus and Wan 2.2 TI2V 5B with their encoders and VAEs. Progress: `C:\AI\logs\model-download.log`.
+### Voice and music
+`C:\AI\tools\setup-audio.ps1` installs the engines these scripts are written for; adapt it if you use others. `install-ffmpeg.ps1` is needed for MP3 output.
 
-Total image-side download is about 60 GB. The script also fetches the fast mode (`turbo21`, Qwen-Image 2.1 Turbo) and Z-Image Turbo, which sd-server preloads when the image engine starts. If you skip Z-Image, change `$ImgArgs` in `desktop\mode.ps1` to preload a model you do have.
+## 4. Where files go
 
-**Use your own image models:** add or edit a profile in `$Profiles` in `desktop\gateway.ps1` (an sd-server recipe + component file paths relative to `C:\AI\image-models`).
+| Folder | What goes there |
+|---|---|
+| `C:\AI\models\` | LLM GGUFs and vision projectors |
+| `C:\AI\image-models\diffusion_models\`, `text_encoders\`, `vae\`, `upscale_models\` | Image and video components |
+| `C:\AI\audio\...` | Voice and music engines and weights (created by `setup-audio.ps1`) |
 
-## 3. Voice and music (optional)
+If you use the example download scripts, a finished file gets a `<file>.done` marker so reruns skip it.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\AI\tools\setup-audio.ps1           # uv, Chatterbox-Turbo venv, ACE-Step 1.5
-powershell -ExecutionPolicy Bypass -File C:\AI\tools\prefetch-music-models.ps1 # faster ACE-Step weights download
-powershell -ExecutionPolicy Bypass -File C:\AI\tools\install-ffmpeg.ps1        # ACE-Step needs ffmpeg for MP3
-```
-Stop the music engine first (`C:\AI\mode.ps1 stop`) before prefetching. Keep ACE-Step's 1.7B LM on disk even if unused: its startup check re-downloads it when missing.
+## 5. Example scripts and the author's picks (history, not advice)
 
-## Hugging Face tokens
+`desktop\tools\download-chat-model.ps1`, `download-models.ps1` and `prefetch-music-models.ps1` are **examples**. They download the models the original author chose for one 12 GB GPU in late 2026. Read them to see how downloads are scripted (resume, slow-connection retry, `.done` markers), then copy and edit them with the list *you* chose. They are not kept up to date.
 
-The default models are public, so no token is needed. If you add a gated model, download it with your own token on the desktop (for example `huggingface-cli login`, which stores it in your user profile). Never put a token in a script in this repo.
+For the record, that setup used a Qwen3.6-family mixture-of-experts LLM, Qwen-Image 2.1-family image models, Real-ESRGAN for upscaling, Wan 2.2 for experimental video, Chatterbox-Turbo for voice and ACE-Step 1.5 for music. That was one person's pick at one moment. Research again before copying any of it.
 
-## Licenses
+## 6. Hugging Face tokens
 
-Check each model's license. Some defaults are non-commercial (Qwen-Image 2.1 uses the Qwen Research License).
+Most open models need no token. For a gated model, download it with your own token on the host PC (for example `huggingface-cli login`, which stores it in your user profile). Never put a token in a script in this repo.
+
+## 7. Licenses
+
+Check each model's license before you use its output. Some are non-commercial or research-only.

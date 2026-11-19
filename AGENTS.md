@@ -1,6 +1,6 @@
 # AGENTS.md: guide for AI assistants working with Lumen Studio
 
-Last reviewed: 2026-11-19. Audience: any AI assistant (a local model inside Lumen Code / OpenCode, Lumen Chat, Claude Code, Copilot, etc.) that is reading this repo to explain, support, set up or change Lumen.
+Last reviewed: 2026-11-19. Nothing in this repo is a "standard" or a "default": every file is either working code or a guide, and every model, host name and path named here is an example unless it says otherwise. Audience: any AI assistant (a local model inside Lumen Code / OpenCode, Lumen Chat, Claude Code, Copilot, etc.) that is reading this repo to explain, support, set up or change Lumen.
 
 Markers:
 - **[UNKNOWN]** = this guide can't know it (it depends on the user's setup). Ask or check; don't guess.
@@ -35,25 +35,24 @@ Rules for that folder:
 6. For big or risky changes (gateway code, Windows/network changes, anything in section 13), say so and suggest a careful, reviewed change with a backup.
 7. For model or software recommendations, **search the web first**. Your training data is older than the user's setup.
 
-## 2. Defaults this project was built around
+## 2. Principles this project follows
 
 - **Privacy first.** Everything runs locally. No cloud services for content, no telemetry. Lumen data never goes in OneDrive or other synced cloud folders.
-- **Unrestricted open-weight models** with permissive licenses, where there's a choice. Say so when an option trades this off.
+- **The user chooses their models.** Never steer them toward a particular model, and don't answer model questions from memory: research current options for their hardware (`docs/INSTALL-MODELS.md`). Ask what matters to them (quality vs speed, license, content policy) rather than assuming.
 - **Recommend-only checks.** Reports never install, update or delete on their own.
 - **Reversible changes.** Back up first; say how to roll back.
 - **Confirm first** before anything destructive, permanent or outward-facing.
 - **Plain, short answers.** Lead with the answer or next step, one action at a time.
-- Page design bar: polished, professional, dark, great on a phone.
 
-The user's own preferences (in their `Lumen` folder or the conversation) override these.
+The user's own preferences (in their `Lumen` folder or the conversation) come first.
 
 ## 3. What Lumen is
 
 A self-hosted, private AI studio that runs on the user's own PC, with whatever that PC's GPU can handle. No cloud, no accounts.
 
-**Standard setup = one PC.** That PC (the **host PC**) runs the gateway, the models and the page, and stores everything. The user opens the page in a browser on that same PC at `http://127.0.0.1:1240/`. Nothing else is required.
+**One PC is all that's required.** That PC (the **host PC**) runs the gateway, the models and the page, and stores everything. The user opens the page in a browser on that same PC at `http://127.0.0.1:1240/`. Nothing else is required.
 
-**Bonus setups, all optional.** If the user has extra computing power or other devices, Lumen can use them:
+**Optional extras.** If the user has extra computing power or other devices, Lumen can use them:
 - **Remote access**: reach the host PC's page from a laptop or phone over a private Tailscale network.
 - **A dedicated "data center" PC**: a stronger always-on PC that does the heavy work, with a laptop or phone as the thin front end. This is how the original author runs it, but it is not what a normal install looks like.
 - **A second machine for development**: deploy changes and run backups over SSH.
@@ -67,7 +66,7 @@ Page address: `http://127.0.0.1:1240/` on the host PC. With remote access set up
 
 ## 4. Network
 
-**Single PC (standard).** The gateway listens on `127.0.0.1:1240` and only answers that PC. No firewall changes, no port forwarding, nothing exposed.
+**Single PC.** The gateway listens on `127.0.0.1:1240` and only answers that PC. No firewall changes, no port forwarding, nothing exposed.
 
 **Remote access (optional, bonus).** Tailscale is the only supported way in. Nothing is port-forwarded.
 - `tailscale serve` on the host PC:
@@ -117,21 +116,20 @@ Avoid port 8080 (often taken by other vendors' services). Models don't start at 
 
 One GPU engine at a time; switching stops the others. Chat and Code share one llama-server when their settings match.
 
-| Page choice | Default model | Notes (on a 12 GB card) |
+| Slot | What it needs | The author's example (history, not a recommendation) |
 |---|---|---|
-| Image fast (`turbo21`) | Qwen-Image 2.1 Turbo Q8_0, 8 steps | ~15 s |
-| Image Standard (`real`) | Qwen-Image 2.1 Q8_0, 40 steps | ~70 s |
-| Image Realistic (`max`, uses `real`) | Qwen-Image 2.1 at 2K, 50 steps | minutes |
-| Edit | Qwen-Image 2.1 + Qwen3-VL vision projector | ~60-80 s |
-| Upscale 4x | Real-ESRGAN x4plus | 15-30 s |
-| Video (experimental) | Wan 2.2 TI2V 5B | placeholder quality |
-| Voice | Chatterbox-Turbo (cloning) | ~45 s engine start |
-| Music | ACE-Step 1.5 turbo + 0.6B LM, MP3 | ~1 min per 30 s |
-| Chat / Code | Qwen3.6-35B-A3B uncensored Q4_K_M + mmproj, 128K ctx | ~35-45 tok/s |
+| Image (fast / standard / realistic) and Edit | a stable-diffusion.cpp-supported image model, text encoder and VAE | Qwen-Image 2.1 family, 8 to 50 steps; ~15 s to minutes on a 12 GB card |
+| Upscale 4x | an upscaler model | Real-ESRGAN x4plus |
+| Video (experimental) | a stable-diffusion.cpp-supported video model | Wan 2.2 TI2V 5B |
+| Voice | the voice engine integrated in `desktop\audio\voice_server.py` | Chatterbox-Turbo |
+| Music | the music engine installed by `setup-audio.ps1` | ACE-Step 1.5 |
+| Chat / Code | a llama.cpp GGUF (+ optional vision projector) | a Qwen3.6-family MoE, 128K ctx, ~35-45 tok/s on a 12 GB card |
+
+**Do not copy the right-hand column.** It is one person's picks for one GPU at one moment. Choose models by researching current options for *this* user's hardware (`docs/INSTALL-MODELS.md`). Be aware how much of this is functional code rather than configuration: the LLM is fully configurable (`chat-model.json` / `code-model.json`), but the page's image picker, its labels and tuned step counts (`IMG_MODELS`, `PROFILE_LABEL` in `app.js`) and the image profiles (`$Profiles` in `gateway.ps1`) are written around the author's image models, and voice and music are wired to specific engines. Using other image/audio models means editing that code.
 
 - Model ids: Chat asks llama-server for `lumen-chat`, OpenCode for `lumen-code`.
 - LLM settings: `C:\AI\config\chat-model.json` / `code-model.json` (see `desktop\llm-config.ps1` and `docs/INSTALL-MODELS.md`).
-- Image profiles: `$Profiles` in `desktop\gateway.ps1`.
+- Image profiles: `$Profiles` in `desktop\gateway.ps1` (plus the picker in `app.js`, see above).
 - Manual switch: `powershell -NoProfile -ExecutionPolicy Bypass -File C:\AI\mode.ps1 llm|code|image|voice|music|stop|gate` (prints one line starting `ok` or `error`). Prefer the page.
 - **[UNKNOWN]** which models the user actually runs: check their config files.
 
@@ -225,7 +223,7 @@ Copy-Item "$($b.FullName)\*.ps1" C:\AI\ -Force; Copy-Item "$($b.FullName)\web\*"
 - Tailscale and its `serve` config; OpenSSH Server; the "Lumen Gateway" task.
 - Power settings that keep an unattended host PC awake (sleep/hibernate off).
 - GPU drivers, CUDA DLLs, the Python venvs for voice/music (absolute paths baked in).
-- Model files (ACE-Step's unused-looking 1.7B LM included) and the newest deploy backups.
+- Model files in use (check what each engine needs before deleting anything: some engines re-download a file they find missing) and the newest deploy backups.
 - Never move Lumen into OneDrive or any synced cloud folder.
 
 ## 14. Contributing to this template
@@ -248,14 +246,14 @@ Copy-Item "$($b.FullName)\*.ps1" C:\AI\ -Force; Copy-Item "$($b.FullName)\web\*"
 
 ## 16. Fresh install runbook (Windows)
 
-**Standard install = one Windows PC with an NVIDIA GPU, running everything locally.** Steps marked *(bonus)* are optional extras for remote access or a second machine: skip them unless the user wants them.
+**A single Windows PC with an NVIDIA GPU, running everything locally, is all this runbook needs.** Steps marked *(bonus)* are optional extras for remote access or a second machine: skip them unless the user wants them.
 Status: written from a real working setup and checked against its file layout, but **not yet run on a clean machine**. If a step fails, trust the machine, say what you saw, and fix this section afterwards (section 17).
 Do the steps in order. Each ends with a **Check**: don't move on until it passes. Anything needing admin rights or network changes is **[STOP]** until the user says go.
 
 ### Step 0. Ask the user first
 1. Windows 10/11? (Linux, macOS and AMD GPUs are not supported: the scripts are Windows PowerShell 5.1 and the engines are CUDA builds.)
 2. NVIDIA GPU model and VRAM (`nvidia-smi`), RAM, free disk (need ~150 GB: models alone ~90 GB). Lumen runs whatever this machine can: weaker hardware means smaller models and slower results.
-3. Do they want only this PC (standard), or also remote access from a laptop/phone *(bonus)*, or a second machine to deploy from *(bonus)*? If remote access: do they use Tailscale, and are MagicDNS and HTTPS certificates enabled in its admin console?
+3. Do they want only this PC, or also remote access from a laptop/phone *(bonus)*, or a second machine to deploy from *(bonus)*? If remote access: do they use Tailscale, and are MagicDNS and HTTPS certificates enabled in its admin console?
 4. Which Windows user will run Lumen? (It owns `C:\AI\secrets`.)
 5. Do they want voice, music and the Code workspace? (All optional. Code needs Tailscale, see section 3.)
 6. Do they keep personal notes in a local `Lumen` folder? Read it for anything already decided (section 0).
@@ -286,16 +284,16 @@ Download release builds, unzip, and copy **all** files from the zip into the fol
 | stable-diffusion.cpp, Windows x64 **CUDA 12** build | github.com/leejet/stable-diffusion.cpp/releases | `C:\AI\sd\` | `sd-server.exe` |
 Pick the newest release whose asset names say `win`, `x64` and `cuda12`/`cu12`. If the sd.cpp release has no `sd-server.exe`, say so and ask the user (it may need a newer release or a build). Check: `& C:\AI\llama.cpp\llama-server.exe --version` and `& C:\AI\sd\sd-server.exe --help` both print without a missing-DLL error.
 
-### Step 5. Models (about 90 GB with the defaults, an hour or more)
-Run, one at a time, and wait for each: `C:\AI\tools\download-chat-model.ps1`, then `C:\AI\tools\download-models.ps1` (commands and sizes in `docs/INSTALL-MODELS.md`). They resume if interrupted.
-**Match the models to the machine** (edit `C:\AI\config\chat-model.json` and `code-model.json`, see section 7):
-| VRAM | Suggestion |
+### Step 5. Choose and install models
+**Research first, don't copy.** Follow `docs/INSTALL-MODELS.md` section 2: ask the user about hardware and priorities, search the web for the current best options per slot, filter by runtime support / VRAM fit / license, present 2-3 candidates with trade-offs, let the user choose. Then download from the model's official or trusted repository (check sizes), write `C:\AI\config\chat-model.json` and `code-model.json` from the `*.example.json` files, and wire any image models into `$Profiles` and `$ImgArgs` (INSTALL-MODELS section 3). The `download-*.ps1` scripts are examples of how to script a resumable download; copy and edit them, don't run them blindly.
+**Fit the model to the machine.** Rough guide by VRAM (tune `ctx`, `cpu_moe`, `kv_type` in the config; these are starting points to adjust, not tested recommendations):
+| VRAM | Starting points |
 |---|---|
 | 24 GB+ | `cpu_moe` 0, larger `ctx` |
-| 12 GB (the tested setup) | defaults: `ctx` 131072, `cpu_moe` 24, `kv_type` q8_0 |
-| 8 GB | `ctx` 32768, `cpu_moe` 40+, or a smaller GGUF; image Standard/Realistic will be slow. **[UNKNOWN]** not tested |
-| under 8 GB | use a small dense GGUF for chat and skip the big image models. **[UNKNOWN]** not tested |
-Remove `extra_args` (MTP) if the chosen model has no MTP head. Check: every file has a `.done` marker next to it (`Get-ChildItem C:\AI\models, C:\AI\image-models -Recurse -Filter *.done`).
+| about 12 GB | a larger MoE model with some experts on the CPU (`cpu_moe`), moderate `ctx`, q8_0 KV cache |
+| about 8 GB | lower `ctx`, higher `cpu_moe`, or a smaller quantization; large image models will be slow. **[UNKNOWN]** not tested |
+| under 8 GB | a small dense GGUF for chat; skip the large image models. **[UNKNOWN]** not tested |
+Only add `extra_args` your chosen model's card recommends. **Check:** every file you downloaded exists with the expected size, and `mode.ps1 llm` prints `ok` (it stops with a clear message if no model is configured).
 
 ### Step 6. Voice and music (optional)
 `C:\AI\tools\setup-audio.ps1`, then `install-ffmpeg.ps1`, then `prefetch-music-models.ps1`. Check: `C:\AI\audio\voice\.venv\Scripts\python.exe` and `C:\AI\audio\ace-step\.venv` exist. Skip this and the page's Voice/Music tabs will report "not installed".
@@ -343,7 +341,7 @@ Only for users who deploy or back up from another Windows PC.
 ### Known sharp edges for installers
 - Hard-coded `C:\AI` paths: keep the junction, don't relocate Engine.
 - The first image or music load is slow (model load); the loading screen is normal.
-- The fast image mode and Z-Image need their files from step 5, or image mode fails to start.
+- Image mode starts a preloaded model named in `$ImgArgs` (`mode.ps1`) and the page's picker uses `$Profiles` (`gateway.ps1`). If your models differ, edit both, or image mode fails to start.
 - Port 8080 is avoided on purpose; Lumen uses 1240, 1234, 8099, 4096, 4097, 8001, 8002, 8443.
 
 ## 17. Keeping this repo current (read before changing it)
@@ -353,7 +351,7 @@ This repo is the public template; the owner's real Lumen is separate and may be 
 | If you change... | Also update... |
 |---|---|
 | a port, folder, or service | section 5/6 here, the README diagram, the troubleshooting checks in section 12 |
-| a model, profile or download | `docs/INSTALL-MODELS.md`, the table in section 7, `desktop\tools\download-*.ps1` |
+| a model slot, profile or download script | `docs/INSTALL-MODELS.md`, the table in section 7, the example `desktop\tools\download-*.ps1` |
 | a setting or secret location | `docs/SECRETS.md`, the matching `*.example.json` |
 | install steps or prerequisites | section 16 here and the README Setup section |
 | a gateway endpoint | the header comment of `desktop\gateway.ps1` and section 8 |
@@ -364,4 +362,25 @@ Every time, before you commit and push:
 3. Update "Last reviewed" at the top of this file when you've re-verified it against reality.
 4. Never copy personal values (names, hosts, IPs, user paths, tokens) from the user's local `Lumen` folder into this repo.
 
+### How to push a change (exact steps)
+Git only sends the files that changed, so a one-line fix is a one-file push; never re-download or re-upload the whole repo. From the repo folder (in PowerShell):
+```powershell
+git pull --rebase origin main                                    # 1. get anything new from GitHub first
+# ...edit files, update the docs from the table above...
+powershell -ExecutionPolicy Bypass -File scripts\check-before-push.ps1   # 2. must print OK
+git status                                                       # 3. look at what will go out
+git add -A
+git commit -m "short description of what changed and why"
+git push origin main                                             # 4. if rejected, pull --rebase again; never --force
+```
+Then add one line to `CHANGELOG.md` (newest first) in the same commit. If the user asks you to push, show them `git status` and the changed file names first; the repo is public.
+
 Optional: make the check automatic with a git hook: save `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-before-push.ps1` as `.git/hooks/pre-push` (as a `#!/bin/sh` script calling it), and a failed check blocks the push.
+
+## 18. Staying up to date (for AI readers)
+
+You only know this repo as of when you last read it, and nothing notifies you of a push. So:
+1. At the start of a session, re-fetch `AGENTS.md` from the repo and compare its **Last reviewed** date with the copy you hold. If it is newer, re-read it.
+2. Read `CHANGELOG.md`: one line per push, newest first, so you can see what changed without reading the whole repo.
+3. If you have a local clone, `git pull` before relying on anything in it.
+4. If something here disagrees with what you see on the user's machine, trust the machine, tell the user, and suggest a fix to the docs (section 17).

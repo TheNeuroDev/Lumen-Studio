@@ -1,0 +1,11 @@
+{
+  "_readme": "Copy to C:\\AI\\config\\code-model.json and set 'gguf' to the model YOU chose (see docs/INSTALL-MODELS.md). Every field except gguf is optional. Unknown keys such as this one are ignored.",
+  "name": "My code model",
+  "gguf": "C:\\AI\\models\\YOUR-MODEL.gguf",
+  "mmproj": "",
+  "ctx": 32768,
+  "cpu_moe": 0,
+  "kv_type": "q8_0",
+  "extra_args": "",
+  "server": "C:\\AI\\llama.cpp\\llama-server.exe"
+}

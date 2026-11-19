@@ -1,4 +1,6 @@
-﻿# Pre-downloads ACE-Step 1.5's model weights into C:\AI\audio\ace-step\checkpoints with curl, because
+﻿# EXAMPLE SCRIPT: this downloads the models the original author chose for one 12 GB GPU. It is NOT a recommendation.
+# Research current models for your own hardware first (docs/INSTALL-MODELS.md), then copy this file and edit the list.
+# Pre-downloads ACE-Step 1.5's model weights into C:\AI\audio\ace-step\checkpoints with curl, because
 # huggingface_hub's own first-run download crawls at ~1 MB/s on this connection. Re-runnable/resumable.
 # Stop the music engine first (mode.ps1 stop). Log: C:\AI\logs\model-download.log
 $ErrorActionPreference = 'Continue'
