@@ -2,6 +2,7 @@
 
 One line per push, newest first. AI assistants: read this to see what changed since you last looked (see `AGENTS.md` section 18).
 
+- 2026-11-19: The gateway now sends an ETag and answers 304 for unchanged files, so reopening the page no longer re-downloads ~700 KB (this caused a long black screen on first open over a slow tailnet). Render times no longer show as "1m 60s".
 - 2026-11-19: `docs/INSTALL-MODELS.md` now documents how to swap the voice or music engine: the HTTP contracts the gateway expects and the files to change.
 - 2026-11-19: Image profiles and the preloaded image model now come from `C:\AI\config\models.json` (`desktop\config\models.example.json`) instead of being hard-coded in `gateway.ps1` / `mode.ps1`. **Breaking for existing installs:** create `models.json` or image mode will not start. The page's image picker, labels, step ranges, sampler settings and sizes now come from the same file (optional `ui` block) via `/gw/ui.js`; the model names in the page are no longer hard-coded. Voice and music engines are still code-defined.
 - 2026-11-19: README reworded around one PC (remote access optional); repo now lives at TheNeuroDev/Lumen-Studio.

@@ -648,7 +648,7 @@ function Send($ctx, [int]$code, [byte[]]$bytes, $type, $cache = 'no-store') {
     } catch {} finally { try { $res.Close() } catch {} }
 }
 function Send-Json($ctx, [int]$code, $obj) { Send $ctx $code ($Utf8.GetBytes($Json.Serialize($obj))) 'application/json; charset=utf-8' }
-# Files, with byte ranges (iPhone Safari will not play video/audio without them).
+# Files, with byte ranges (iPhone Safari will not play video/audio without them) and ETags.
 function Send-File($ctx, $path, $cache) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Send-Json $ctx 404 @{ error = 'not found' }; return }
     $ext = [IO.Path]::GetExtension($path).ToLower()
@@ -656,7 +656,17 @@ function Send-File($ctx, $path, $cache) {
     $res = $ctx.Response
     $fs = [IO.File]::Open($path, 'Open', 'Read', 'ReadWrite')
     try {
-        $len = $fs.Length; $start = 0; $end = $len - 1; $code = 200
+        $len = $fs.Length
+        # ETag: file size + last write time (UTC ticks). Changes on every deploy, no hashing needed.
+        $fw = [IO.File]::GetLastWriteTimeUtc($path).Ticks
+        $etag = '"' + (($len -bxor $fw).ToString('x8') + '-' + $len.ToString('x8')) + '"'
+        $res.Headers['ETag'] = $etag
+        # Conditional request: answer 304 if the client already has this version.
+        $ifNoneMatch = $ctx.Request.Headers['If-None-Match']
+        if ($ifNoneMatch -and -not $ctx.Request.Headers['Range'] -and ($ifNoneMatch -split ',' | ForEach-Object { $_.Trim() }) -contains $etag) {
+            $res.StatusCode = 304; $res.Headers['Cache-Control'] = $cache; $res.Close(); return
+        }
+        $start = 0; $end = $len - 1; $code = 200
         $range = $ctx.Request.Headers['Range']
         if ($range -match '^bytes=(\d*)-(\d*)$') {
             if ($Matches[1] -ne '') { $start = [long]$Matches[1]; if ($Matches[2] -ne '') { $end = [Math]::Min([long]$Matches[2], $len - 1) } }

@@ -229,7 +229,7 @@ function editDims() {
 }
 function vidDims() { const [w, h] = VID_DIMS[cfg.video.res][cfg.video.shape]; return { w, h }; }
 const vidFrames = () => (VID_LEN.find(l => l[0] === cfg.video.len) || VID_LEN[0])[2];
-function fmtMs(ms) { if (!ms) return '—'; const s = ms / 1000; return s < 60 ? s.toFixed(1) + 's' : Math.floor(s / 60) + 'm ' + Math.round(s % 60) + 's'; }
+function fmtMs(ms) { if (!ms) return '—'; const s = ms / 1000; return s < 59.95 ? s.toFixed(1) + 's' : (Math.floor(s / 60) + (Math.round(s % 60) === 60 ? 1 : 0)) + 'm ' + (Math.round(s % 60) % 60) + 's'; }
 function fmtDur(s) { s = Math.max(0, Math.round(+s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function fmtBytes(b) { if (!b) return '—'; return b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.round(b / 1024) + ' KB'; }
 function fmtEst(sec) { if (!sec || !isFinite(sec)) return ''; return sec < 60 ? '≈ ' + (sec < 10 ? sec.toFixed(1) : Math.round(sec)) + 's' : '≈ ' + Math.round(sec / 60) + ' min'; }
