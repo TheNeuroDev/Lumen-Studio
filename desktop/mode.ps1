@@ -30,14 +30,16 @@ $OcConfig = Join-Path $env:USERPROFILE '.config\opencode\opencode.json'
 $ImgExe   = "$root\sd\sd-server.exe"
 $ImgPort  = 1234
 $ImgDir   = "$root\image-models"
-# EDIT FOR YOUR MODELS: the image model sd-server preloads at start (the author's choice; use files you have, see
-# docs/INSTALL-MODELS.md). --model-dir lets the Lumen gateway load other recipes at runtime;
-# --hires-upscalers-dir provides the ESRGAN upscaler for /sdcpp/v1/upscale.
-$ImgArgs  = "--model-dir `"$ImgDir`" --hires-upscalers-dir `"$ImgDir\upscale_models`" " +
-            "--diffusion-model `"$ImgDir\diffusion_models\z_image_turbo-Q8_0.gguf`" " +
-            "--vae `"$ImgDir\vae\ae.safetensors`" " +
-            "--llm `"$ImgDir\text_encoders\Qwen3-4B-Instruct-2507-Q4_K_M.gguf`" " +
-            "--cfg-scale 1.0 --listen-ip 127.0.0.1 --listen-port $ImgPort --offload-to-cpu --flash-attn off,diffusion=on " +
+# The image model sd-server preloads comes from C:\AI\config\models.json ("preload": diffusion_model, vae, llm, paths
+# relative to image-models; see config\models.example.json and docs/INSTALL-MODELS.md). --model-dir lets the Lumen
+# gateway load other profiles at runtime; --hires-upscalers-dir provides the ESRGAN upscaler for /sdcpp/v1/upscale.
+$ModelsCfg = Get-ModelsCfg
+$pre = $ModelsCfg.preload
+$ImgArgs  = "--model-dir `"$ImgDir`" --hires-upscalers-dir `"$ImgDir\upscale_models`" "
+foreach ($pair in @(@('diffusion_model','--diffusion-model'), @('vae','--vae'), @('llm','--llm'))) {
+    if ($pre -and $pre[$pair[0]]) { $ImgArgs += "$($pair[1]) `"$ImgDir\$(([string]$pre[$pair[0]]) -replace '/', '\')`" " }
+}
+$ImgArgs += "--cfg-scale 1.0 --listen-ip 127.0.0.1 --listen-port $ImgPort --offload-to-cpu --flash-attn off,diffusion=on " +
             "--completed-ttl-seconds 1800"
 
 $Uv        = "$root\tools\uv\uv.exe"
@@ -237,6 +239,7 @@ switch ($Mode) {
     'image' {
         Ensure 'image' $ImgPort {
             if (-not (Test-Path $ImgExe)) { Fail "sd-server not found at $ImgExe" }
+            if (-not $ModelsCfg.preload.diffusion_model) { Fail "no image model configured: copy desktop\config\models.example.json to C:\AI\config\models.json and set preload (see docs/INSTALL-MODELS.md)" }
         } { Start-Detached "`"$ImgExe`" $ImgArgs" "$logs\sd-server.log" }
     }
     'voice' {

@@ -138,11 +138,11 @@ One GPU engine at a time; switching stops the others. Chat and Code share one ll
 | Music | the music engine installed by `setup-audio.ps1` | ACE-Step 1.5 |
 | Chat / Code | a llama.cpp GGUF (+ optional vision projector) | a Qwen3.6-family MoE, 128K ctx, ~35-45 tok/s on a 12 GB card |
 
-**Do not copy the right-hand column.** It is one person's picks for one GPU at one moment. Choose models by researching current options for *this* user's hardware (`docs/INSTALL-MODELS.md`). Be aware how much of this is functional code rather than configuration: the LLM is fully configurable (`chat-model.json` / `code-model.json`), but the page's image picker, its labels and tuned step counts (`IMG_MODELS`, `PROFILE_LABEL` in `app.js`) and the image profiles (`$Profiles` in `gateway.ps1`) are written around the author's image models, and voice and music are wired to specific engines. Using other image/audio models means editing that code.
+**Do not copy the right-hand column.** It is one person's picks for one GPU at one moment. Choose models by researching current options for *this* user's hardware (`docs/INSTALL-MODELS.md`). Be aware how much of this is functional code rather than configuration: the LLM is fully configurable (`chat-model.json` / `code-model.json`), and so are the image profiles and the preloaded image model (`models.json`, see `desktop\config\models.example.json`). But the page's image picker, its labels and tuned step counts (`IMG_MODELS`, `PROFILE_LABEL`, `STEP_RANGE` in `app.js`) still name the author's profile keys (`turbo`, `quality`, `real`, `max`, `turbo21`, `edit`, `video`), and voice and music are wired to specific engines. Using other image models means a `models.json` plus matching labels in `app.js`; other audio engines mean code changes.
 
 - Model ids: Chat asks llama-server for `lumen-chat`, OpenCode for `lumen-code`.
 - LLM settings: `C:\AI\config\chat-model.json` / `code-model.json` (see `desktop\llm-config.ps1` and `docs/INSTALL-MODELS.md`).
-- Image profiles: `$Profiles` in `desktop\gateway.ps1` (plus the picker in `app.js`, see above).
+- Image profiles and the preloaded image model: `C:\AI\config\models.json` (read by `Get-ModelsCfg` in `desktop\llm-config.ps1`), plus the picker labels in `app.js`, see above.
 - Manual switch: `powershell -NoProfile -ExecutionPolicy Bypass -File C:\AI\mode.ps1 llm|code|image|voice|music|stop|gate` (prints one line starting `ok` or `error`). Prefer the page.
 - **[UNKNOWN]** which models the user actually runs: check their config files.
 
@@ -298,7 +298,7 @@ Download release builds, unzip, and copy **all** files from the zip into the fol
 Pick the newest release whose asset names say `win`, `x64` and `cuda12`/`cu12`. If the sd.cpp release has no `sd-server.exe`, say so and ask the user (it may need a newer release or a build). Check: `& C:\AI\llama.cpp\llama-server.exe --version` and `& C:\AI\sd\sd-server.exe --help` both print without a missing-DLL error.
 
 ### Step 5. Choose and install models
-**Research first, don't copy.** Follow `docs/INSTALL-MODELS.md` section 2: ask the user about hardware and priorities, search the web for the current best options per slot, filter by runtime support / VRAM fit / license, present 2-3 candidates with trade-offs, let the user choose. Then download from the model's official or trusted repository (check sizes), write `C:\AI\config\chat-model.json` and `code-model.json` from the `*.example.json` files, and wire any image models into `$Profiles` and `$ImgArgs` (INSTALL-MODELS section 3). The `download-*.ps1` scripts are examples of how to script a resumable download; copy and edit them, don't run them blindly.
+**Research first, don't copy.** Follow `docs/INSTALL-MODELS.md` section 2: ask the user about hardware and priorities, search the web for the current best options per slot, filter by runtime support / VRAM fit / license, present 2-3 candidates with trade-offs, let the user choose. Then download from the model's official or trusted repository (check sizes), write `C:\AI\config\chat-model.json` and `code-model.json` from the `*.example.json` files, and write `C:\AI\config\models.json` from `models.example.json` for any image models (INSTALL-MODELS section 3). The `download-*.ps1` scripts are examples of how to script a resumable download; copy and edit them, don't run them blindly.
 **Fit the model to the machine.** Rough guide by VRAM (tune `ctx`, `cpu_moe`, `kv_type` in the config; these are starting points to adjust, not tested recommendations):
 | VRAM | Starting points |
 |---|---|
@@ -354,7 +354,7 @@ Only for users who deploy or back up from another Windows PC.
 ### Known sharp edges for installers
 - Hard-coded `C:\AI` paths: keep the junction, don't relocate Engine.
 - The first image or music load is slow (model load); the loading screen is normal.
-- Image mode starts a preloaded model named in `$ImgArgs` (`mode.ps1`) and the page's picker uses `$Profiles` (`gateway.ps1`). If your models differ, edit both, or image mode fails to start.
+- Image mode starts the model named under `preload` in `C:\AI\config\models.json`, and the gateway's profiles come from the same file. Without it, image mode fails with a message saying so.
 - Port 8080 is avoided on purpose; Lumen uses 1240, 1234, 8099, 4096, 4097, 8001, 8002, 8443.
 
 ## 17. Keeping this repo current (read before changing it)

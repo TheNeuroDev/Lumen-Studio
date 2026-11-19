@@ -1,6 +1,7 @@
 # ---- Your personal values: never commit ----
 lumen.config.json
 desktop/config/lumen.json
+desktop/config/models.json
 desktop/config/paths.json
 desktop/config/electricity.json
 .env

@@ -60,30 +60,11 @@ $CodeRoot = $LumenPaths.code
 $UploadMax = 2GB   # per file, /gw/code/upload
 
 # Image-engine model profiles: sd-server recipe + component files (relative to C:\AI\image-models).
-# EDIT FOR YOUR MODELS: these entries are the author's own wiring, and the page (app.js IMG_MODELS, PROFILE_LABEL, step counts) is
-# written around them. Add or replace profiles to match the models you chose (docs/INSTALL-MODELS.md).
-$Profiles = [ordered]@{
-    turbo   = @{ label = 'Z-Image Turbo'; recipe = 'z-image-turbo'; models = [ordered]@{
-                diffusion_model = 'diffusion_models/z_image_turbo-Q8_0.gguf'
-                llm = 'text_encoders/Qwen3-4B-Instruct-2507-Q4_K_M.gguf'; vae = 'vae/ae.safetensors' } }
-    quality = @{ label = 'Qwen-Image 2512'; recipe = 'qwen-image'; models = [ordered]@{
-                diffusion_model = 'diffusion_models/qwen-image-2512-Q4_K_M.gguf'
-                llm = 'text_encoders/Qwen2.5-VL-7B-Instruct-Q6_K.gguf'; vae = 'vae/qwen_image_vae.safetensors' } }
-    # Realistic and (since 2026-11-17) Edit: the vision projector lets 2.1 take the source image as a reference.
-    real    = @{ label = 'Qwen-Image 2.1'; recipe = 'qwen-image-21'; models = [ordered]@{
-                diffusion_model = 'diffusion_models/qwen-image-2.1-Q8_0.gguf'
-                llm = 'text_encoders/Qwen3-VL-8B-Instruct-Q8_0.gguf'
-                llm_vision = 'text_encoders/Qwen3-VL-8B-mmproj-F16.gguf'; vae = 'vae/qwen_image_2.1_vae_bf16.safetensors' } }
-    # 'Fast' in the picker since 2026-11-16 (8 steps, cfg 1, fixed sigmas; ~10 s at 1 MP). 'turbo' is Z-Image's key.
-    turbo21 = @{ label = 'Qwen-Image 2.1 Turbo'; recipe = 'qwen-image-21-turbo'; models = [ordered]@{
-                diffusion_model = 'diffusion_models/qwen-image-2.1-turbo-Q8_0.gguf'
-                llm = 'text_encoders/Qwen3-VL-8B-Instruct-Q8_0.gguf'; vae = 'vae/qwen_image_2.1_vae_bf16.safetensors' } }
-    # Qwen-Image-Edit 2511 ('edit') left on 2026-11-17: the user kept only Qwen-Image 2.1 editing (its files and the
-    # Lightning LoRA stay on disk for now). Requests for profile 'edit' are served by 'real'.
-    video   = @{ label = 'Wan 2.2 5B'; recipe = 'wan22-ti2v-5b'; models = [ordered]@{
-                diffusion_model = 'diffusion_models/Wan2.2-TI2V-5B-Q8_0.gguf'
-                t5xxl = 'text_encoders/umt5-xxl-encoder-Q8_0.gguf'; vae = 'vae/wan2.2_vae.safetensors' } }
-}
+# They come from C:\AI\config\models.json (copy desktop\config\models.example.json and edit it for the models you
+# chose: docs/INSTALL-MODELS.md). The page's picker labels and step ranges (web\app.js IMG_MODELS, PROFILE_LABEL,
+# STEP_RANGE) still name the profile keys, so keep the keys you use in sync until the page reads them from here.
+$ModelsCfg = Get-ModelsCfg
+$Profiles = $ModelsCfg.profiles
 $EngineTimeout = @{ image = 240; voice = 240; music = 600; llm = 300; code = 360 }   # seconds to become ready
 
 foreach ($d in $Web, $Out, $Thumbs, $Trash, $LogDir, $Chats, "$Chats\.trash") { New-Item -ItemType Directory -Force -Path $d | Out-Null }
@@ -112,6 +93,7 @@ $Quick.Timeout = [TimeSpan]::FromSeconds(2)
 function Log($msg) {
     try { [IO.File]::AppendAllText("$LogDir\gateway.log", "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg`r`n", $Utf8) } catch {}
 }
+if ($ModelsCfg.error) { Log "models: $($ModelsCfg.error)" }
 function NowMs { [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() }
 function NewId($prefix) { "$prefix" + '_' + [Guid]::NewGuid().ToString('N').Substring(0, 12) }
 function JsonBody($obj) {

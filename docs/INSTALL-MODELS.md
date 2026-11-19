@@ -9,7 +9,7 @@ If you are an AI assistant: do **not** steer the user toward a particular model,
 | Slot | What the code expects | Swapping it |
 |---|---|---|
 | **Chat** and **Code** LLM | Any GGUF that [llama.cpp](https://github.com/ggml-org/llama.cpp) can run, served by `llama-server` | Edit `C:\AI\config\chat-model.json` / `code-model.json` (section 3). No code change. |
-| **Image, Edit, Upscale, Video** | Any model [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp) supports, served by `sd-server` | Add or edit a profile in `$Profiles` in `desktop\gateway.ps1`, and the preloaded model in `$ImgArgs` in `desktop\mode.ps1`. Small code edit; the page's picker labels may need updating too. |
+| **Image, Edit, Upscale, Video** | Any model [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp) supports, served by `sd-server` | Describe it in `C:\AI\config\models.json` (section 3). No gateway code change; the page's picker labels in `app.js` may need updating to match. |
 | **Voice** and **Music** | Lumen integrates a specific voice engine (`desktop\audio\voice_server.py`) and music engine (`setup-audio.ps1`, `mode.ps1`) | Swapping the *engine* needs code changes. Swapping its *weights* may not. Check the engine's own docs. |
 
 Only one engine holds the GPU at a time, so each slot only has to fit in VRAM on its own.
@@ -52,7 +52,7 @@ Copy `desktop\config\chat-model.example.json` to `C:\AI\config\chat-model.json` 
 - **Without these files the code falls back to a placeholder path that won't exist on your machine, and the LLM will fail to start.** Create them before first use.
 
 ### Image / video
-Put the files under `C:\AI\image-models\` in sd-server's layout: `diffusion_models\`, `text_encoders\`, `vae\`, `upscale_models\`. Then describe them in a profile in `$Profiles` (`desktop\gateway.ps1`): an sd-server recipe name plus the component file paths relative to `C:\AI\image-models`. Use the recipe and flags the model's stable-diffusion.cpp docs give. Also set the preloaded model in `$ImgArgs` (`desktop\mode.ps1`) to one you have, or image mode will not start.
+Put the files under `C:\AI\image-models\` in sd-server's layout: `diffusion_models\`, `text_encoders\`, `vae\`, `upscale_models\`. Then copy `desktop\config\models.example.json` to `C:\AI\config\models.json` and describe them: each entry under `profiles` has a `label`, an sd-server `recipe` name and the component file paths relative to `C:\AI\image-models` (use the recipe and files the model's stable-diffusion.cpp docs give). `preload` names the model sd-server loads at start; without it, image mode will not start. The page currently refers to the profile keys `turbo`, `quality`, `real`, `max`, `turbo21`, `edit` and `video`, so reuse those keys (or update `IMG_MODELS`, `PROFILE_LABEL` and `STEP_RANGE` in `desktop\web\app.js`).
 
 ### Voice and music
 `C:\AI\tools\setup-audio.ps1` installs the engines these scripts are written for; adapt it if you use others. `install-ffmpeg.ps1` is needed for MP3 output.
