@@ -10,7 +10,7 @@ If you are an AI assistant: do **not** steer the user toward a particular model,
 |---|---|---|
 | **Chat** and **Code** LLM | Any GGUF that [llama.cpp](https://github.com/ggml-org/llama.cpp) can run, served by `llama-server` | Edit `C:\AI\config\chat-model.json` / `code-model.json` (section 3). No code change. |
 | **Image, Edit, Upscale, Video** | Any model [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp) supports, served by `sd-server` | Describe it in `C:\AI\config\models.json` (section 3). No gateway or page code change. |
-| **Voice** and **Music** | Lumen integrates a specific voice engine (`desktop\audio\voice_server.py`) and music engine (`setup-audio.ps1`, `mode.ps1`) | Swapping the *engine* needs code changes. Swapping its *weights* may not. Check the engine's own docs. |
+| **Voice** and **Music** | Lumen integrates a specific voice engine (`desktop\audio\voice_server.py`) and music engine (`setup-audio.ps1`, `mode.ps1`) | Swapping the *engine* needs code changes; section 3 lists the HTTP contract to match and the files to touch. Swapping its *weights* may not. |
 
 Only one engine holds the GPU at a time, so each slot only has to fit in VRAM on its own.
 
@@ -54,8 +54,45 @@ Copy `desktop\config\chat-model.example.json` to `C:\AI\config\chat-model.json` 
 ### Image / video
 Put the files under `C:\AI\image-models\` in sd-server's layout: `diffusion_models\`, `text_encoders\`, `vae\`, `upscale_models\`. Then copy `desktop\config\models.example.json` to `C:\AI\config\models.json` and describe them: each entry under `profiles` has a `label`, an sd-server `recipe` name and the component file paths relative to `C:\AI\image-models` (use the recipe and files the model's stable-diffusion.cpp docs give). `preload` names the model sd-server loads at start; without it, image mode will not start. Profile keys are yours to choose, except that a profile named `video` is used for video and one named `edit` for image edits. The page builds its image picker from your profiles. To control it (button labels and notes, step ranges, sampler settings such as guidance, size, which profile edits use), add an optional `ui` block; `models.example.json` explains each field. Setting up a new model family usually means reading its stable-diffusion.cpp recipe for the right `recipe`, files and sampler settings.
 
-### Voice and music
-`C:\AI\tools\setup-audio.ps1` installs the engines these scripts are written for; adapt it if you use others. `install-ffmpeg.ps1` is needed for MP3 output.
+### Voice and music: swapping weights vs swapping the engine
+
+These two slots are the part of Lumen that is **code-defined, not config-defined.** `desktop\audio\voice_server.py` is a small server around one voice engine, and the music engine is installed by `desktop\tools\setup-audio.ps1` and driven by the music task in `desktop\gateway.ps1`. The names the page shows can be changed under `ui.engines` in `models.json`, but the engine itself needs a code change. `install-ffmpeg.ps1` is needed for MP3 output.
+
+**Swapping weights inside the same engine** (a different checkpoint of the engine already installed) usually needs no Lumen change. Follow that engine's own docs, and copy/edit `prefetch-music-models.ps1` if you want it downloaded the same way.
+
+**Swapping the engine itself.** Research current options first (section 2; do not default to one). Then the cleanest route is to leave the gateway and page alone and make the new engine **speak the same small HTTP contract** the old one does, on the same loopback port. Then change only the install and start steps. The gateway handles tasks, progress, saving and the gallery.
+
+*Voice contract* (a server on `127.0.0.1:8002`; `voice_server.py` is the reference implementation):
+
+| Route | Gateway sends | Server answers |
+|---|---|---|
+| `GET /health` | | `200` once the model is loaded |
+| `GET /voices` | | `{"voices":[{"name","seconds"}]}`, the saved voice samples |
+| `POST /voices` | `{"name","wav"}` (base64 WAV, 5-20 s) | `{"ok":true,"name","seconds"}` |
+| `POST /voices/delete` | `{"name"}` | `{"ok":true}` |
+| `POST /tts` | `{"text","voice","temperature"}` (`voice` empty = built-in voice) | `{"wav": <base64 WAV>, "sr","seconds","ms"}`, or `{"error"}` with a 4xx |
+
+*Music contract* (a server on `127.0.0.1:8001`; the gateway's music task in `gateway.ps1` talks to ACE-Step's REST API this way):
+
+| Route | Gateway sends | Server answers |
+|---|---|---|
+| `GET /health` | | any status below 500 means "up" |
+| `POST /release_task` | `{"prompt","lyrics","duration",...}` plus optional `bpm`, `key_scale`, `time_signature` | `{"data":{"task_id"}}` |
+| `POST /query_result` | `{"task_id_list":[id]}` | `{"data":[{"status": 0 working, 1 done, 2 failed, "progress_text","result"}]}`; on done, `result` lists items whose `file` is a URL path |
+| `GET <that file path>` | | the audio bytes (the gateway saves them, as MP3 when ffmpeg is present) |
+| `POST /v1/create_sample` | `{"query","instrumental","vocal_language"}` | the engine's own lyric/caption helper (used by "auto lyrics"; skip it if your engine has none) |
+
+Music is more tightly tied to its engine than voice is (lyric writing, tempo and key fields). Expect to adapt the music task stages (`starting`, `composing`, `downloading` in `gateway.ps1`) rather than only wrap a server.
+
+**Files to touch when you swap an engine:**
+
+1. `desktop\tools\setup-audio.ps1`: create the new engine's environment and download its weights.
+2. `desktop\audio\voice_server.py` (voice) or your own adapter server (music): serve the contract above.
+3. `desktop\mode.ps1`: the `'voice'` / `'music'` start blocks (`$VoiceDir`, `$VoicePy`, `$VoicePort`, `$AceDir`, `$AcePort`, and the `Start-Detached` line). Keep the port, or change it here and in `$Voice` / `$Music` in `gateway.ps1`.
+4. `desktop\gateway.ps1`: only if the contract differs. The readiness check (`Engine-Ready`) and the task code are the places.
+5. `models.json`, `ui.engines`: the names the page displays.
+
+**Check it:** run `tests\smoke.ps1`, switch to Voice or Music in the page and make one clip, and read `C:\AI\logs\voice-server.log` / `music-server.log` if it does not come up. The engine must free the GPU when `mode.ps1` stops it, because only one engine holds the GPU at a time. Record your choice in your own local notes (`MY-LUMEN.md`), not in this repo.
 
 ## 4. Where files go
 

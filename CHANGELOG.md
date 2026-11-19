@@ -2,6 +2,7 @@
 
 One line per push, newest first. AI assistants: read this to see what changed since you last looked (see `AGENTS.md` section 18).
 
+- 2026-11-19: `docs/INSTALL-MODELS.md` now documents how to swap the voice or music engine: the HTTP contracts the gateway expects and the files to change.
 - 2026-11-19: Image profiles and the preloaded image model now come from `C:\AI\config\models.json` (`desktop\config\models.example.json`) instead of being hard-coded in `gateway.ps1` / `mode.ps1`. **Breaking for existing installs:** create `models.json` or image mode will not start. The page's image picker, labels, step ranges, sampler settings and sizes now come from the same file (optional `ui` block) via `/gw/ui.js`; the model names in the page are no longer hard-coded. Voice and music engines are still code-defined.
 - 2026-11-19: README reworded around one PC (remote access optional); repo now lives at TheNeuroDev/Lumen-Studio.
 - 2026-11-19: Added the personalization protocol to `AGENTS.md` section 0 (read template + the user's local configs + their goals) and `docs/MY-LUMEN.example.md`, a local notes template.
