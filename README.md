@@ -1,8 +1,8 @@
 # Lumen Studio
 
-A Personal AI Dashboard. Chats, Code, Images, Videos, Music, and Voice.
+**Your Private, Self hosted AI Dashboard - Chat, Code, Image, Video, Music, and Voice.
 
-A private, self-hosted AI studio. You type on your laptop or phone. Your own desktop GPU does the work.
+You type on your laptop or phone. Your own desktop GPU does the work.
 Everything stays on your machines: models, outputs, chats, logins.
 
 Three modes in one dark, phone-friendly web page:
