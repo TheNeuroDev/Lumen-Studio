@@ -11,7 +11,7 @@ Experience the power of local AI without the privacy trade-offs. No cloud teleme
 *   **🎨 Unified Studio:** Generate images, edit photos, create music, and synthesize voice in one polished, dark-mode interface.
 *   **💬 Private Chat:** Uncensored, local LLM conversations with persistent history stored entirely on your machine.
 *   **💻 Intelligent Code Workspace:** A full coding environment with project isolation ("the fence") and real-time artifact preview.
-*   **📊 Real-Time Cost Tracking:** Monitor GPU usage and electricity costs for every generation and chat session. Know exactly what your AI usage costs.
+*   **📊 Real-Time Cost Tracking:** Monitor GPU usage and electricity costs for every generation and chat session. Know exactly what your AI usage costs in terms of electricity.
 *   **📱 Access Anywhere:** Seamlessly access your dashboard from your laptop, phone, or tablet via your private Tailscale network.
 
 ## 🚀 Key Features
