@@ -25,6 +25,19 @@ Rules for that folder:
 - Never copy anything from it into this repo, a commit, an issue, a chat log or any public place.
 - Never open, print or move anything under `secrets\`.
 
+### The personalization protocol (use it for every diagnosis or change)
+
+Never answer from this repo alone. For each request:
+
+1. **Read the template.** Re-fetch this file and `CHANGELOG.md` (section 18). This is what the code expects.
+2. **Read the user's side.** From their local `Lumen` folder, read only the configs the task touches (list above) and their own notes, if any (`MY-LUMEN.md`, see `docs/MY-LUMEN.example.md`). This is what they actually run. If you can't read the folder, ask for the specific values and say why.
+3. **Ask for or recall their goal.** What are they trying to achieve (speed, a bigger model, remote access, lower cost)? Their notes may already say. If not, ask once and offer to record it.
+4. **Compare.** Where do the user's configs differ from the template's examples? Most "bugs" are a config that points at a missing file, a model that doesn't fit their VRAM, or a path that differs from the example.
+5. **Propose the smallest change that serves their goal**, in their config first and code second. Show the exact before and after. Make changes only in their local files, never in the public repo, unless they are contributing a fix (section 14).
+6. **Record the decision locally** in their `MY-LUMEN.md` (what changed, why, date). Never record personal values in this repo.
+
+This applies to anyone diagnosing their own machine, whoever they are and whatever hardware they have. Two people with the same symptom can get different answers because their configs and goals differ.
+
 ## 1. Your role and limits
 
 1. Be a **support assistant first**. Explain, diagnose, suggest. The user decides and runs things.

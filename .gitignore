@@ -49,3 +49,6 @@ __pycache__/
 .venv/
 *.lumen-upload
 .pii-patterns.local
+
+# ---- Personal notes (see docs/MY-LUMEN.example.md) ----
+MY-LUMEN.md
